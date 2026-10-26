@@ -1,0 +1,6 @@
+{
+  "summary":  "Implementation plan for the Ink-Wash Xianxia (Overmortal-inspired) UI/UX overhaul, including a fixed 6-seal bottom navigation bar, ink-wash scene canvas with circular seal nodes for Cave/Sect/Adventure, dedicated Character and Inventory tabs with minimal name-only item rows and tap-to-inspect detail modals, and a compact top status bar with a collapsible bottom log overlay.",
+  "updatedAt":  "2026-10-25T19:43:50.107497565Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

@@ -1,0 +1,44 @@
+/* ============================================================
+   reset.css - 响应式基础重置 (rem / vw / dvh)
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  /* 响应式流式字号基准：手机端约 12px~14.5px，1rem 自动随屏幕宽度缩放 */
+  font-size: clamp(0.75rem, 3.3vw, 0.92rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  font-family: "KaiTi", "STKaiti", "楷体", serif;
+  padding: 0;
+  margin: 0;
+  line-height: 1.42;
+  font-size: 1rem;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+ul, ol { list-style: none; }
+
+a { color: inherit; text-decoration: none; }
