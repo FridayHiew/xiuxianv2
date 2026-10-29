@@ -17,9 +17,9 @@ const NPC_FAVOR_TIERS = [
     nextThreshold: 20,
     affNextText: "升至【泛泛之交】需好感 20",
     desc: "初识同门，尚不熟悉",
-    perkSummary: "解锁基础寒暄与问候",
+    perkSummary: "解锁日常问候与基础寒暄",
     perks: [
-      "解锁日常寒暄与同门问候"
+      "解锁日常问候与基础寒暄"
     ]
   },
   {
@@ -32,7 +32,7 @@ const NPC_FAVOR_TIERS = [
     nextThreshold: 40,
     affNextText: "升至【志同道合】需好感 40",
     desc: "点头之交，偶有往还",
-    perkSummary: "演武切磋心得 +15%；探问宗门异象秘辛",
+    perkSummary: "演武切磋心得 +15%；探问宗门见闻",
     perks: [
       "演武切磋兵刃熟练度提升 +15%",
       "开启探问宗门异象与八方见闻",
@@ -49,10 +49,10 @@ const NPC_FAVOR_TIERS = [
     nextThreshold: 60,
     affNextText: "升至【莫逆之交】需好感 60",
     desc: "同修论道，相谈甚欢",
-    perkSummary: "坐而论道经验 +25%；清晨偶获同道回赠灵丹",
+    perkSummary: "可开启切磋对战比试；论道经验 +25%",
     perks: [
+      "【特权解锁】可发起切磋对战，磨砺道心武技",
       "坐而论道修为经验收益 +25%",
-      "清晨有概率获赠仙友回礼灵药",
       "心境开导效果提升（心情恢复 +1）"
     ]
   },
@@ -64,18 +64,18 @@ const NPC_FAVOR_TIERS = [
     minAff: 60,
     maxAff: 79,
     nextThreshold: 80,
-    affNextText: "升至【生死与共】需好感 80",
+    affNextText: "升至【金兰好友】需好感 80",
     desc: "推心置腹，促膝长谈",
-    perkSummary: "演武高人点拨加成；促膝长谈平复心魔；请教消耗减半",
+    perkSummary: "可邀请结伴历练（有机率婉拒）；请教道法指点",
     perks: [
-      "演武切磋有高概率触发名师点拨（技能熟练度翻倍）",
-      "促膝长谈平复心魔，道心大幅提升",
+      "【特权解锁】可邀请结伴历练（有机率婉拒）",
+      "演武切磋有名师点拨加成",
       "向其请教道法指点消耗减半"
     ]
   },
   {
     level: 5,
-    stage: "生死与共",
+    stage: "金兰好友",
     class: "gold",
     icon: "⚔️",
     minAff: 80,
@@ -83,11 +83,11 @@ const NPC_FAVOR_TIERS = [
     nextThreshold: 95,
     affNextText: "升至【金兰道侣】需好感 95",
     desc: "患难知交，誓同生死",
-    perkSummary: "赠礼好感收益 +30%；可缔结【异姓金兰】或【双修道侣】",
+    perkSummary: "可结为生死好友；清晨偶尔会送礼物",
     perks: [
-      "馈赠心意好感收益额外 +30%",
-      "可正式缔结【异姓金兰】或【双修道侣】盟誓契约",
-      "历练危局时神识传音庇护，气运加持"
+      "【特权解锁】可正式缔结【金兰好友】盟誓",
+      "【特权解锁】道友清晨偶尔会送灵丹灵材礼物",
+      "馈赠心意好感收益额外 +30%"
     ]
   },
   {
@@ -100,12 +100,11 @@ const NPC_FAVOR_TIERS = [
     nextThreshold: 100,
     affNextText: "好感已达极境圆满",
     desc: "生死相托，情深意笃",
-    perkSummary: "双修修炼速度 +15%；突破心魔抗性 +10%；每日灵犀反哺",
+    perkSummary: "可双修闭关；邀请历练必然答应；修炼速度 +15%",
     perks: [
-      "双修闭关与日常修炼经验收益 +15%",
-      "突破瓶颈时心魔率降低 10%",
-      "每日清晨概率触发同道赠送天材地宝",
-      "解锁专属专属情深知己心声"
+      "【特权解锁】可进行双修闭关，修炼速度 +15%",
+      "【特权解锁】邀请结伴历练必然答应（百呼百应）",
+      "突破瓶颈时心魔率降低 10%，每日灵犀反哺"
     ]
   }
 ];
@@ -587,39 +586,29 @@ function openInteract(id) {
 
   const bodyHtml = `
     <div class="social-modal-container">
-      <div class="social-target-card">
-        <div class="target-name-row">
-          <span class="name">${npc.name}</span>
+      <div class="social-target-card" style="padding:8px 10px; margin-bottom:8px;">
+        <div class="target-name-row" style="margin-bottom:4px; gap:4px;">
+          <span class="name" style="font-size:15px;">${npc.name}</span>
           ${npc.isCompanion ? '<span class="tag pink">💍 道侣</span>' : ''}
           ${npc.isSworn ? '<span class="tag gold">⚔️ 金兰</span>' : ''}
           <span class="tag lvl-${rel.level}">${rel.icon} Lv.${rel.level} ${rel.stage}</span>
-          <span class="tag">${npc.role}</span>
-          <span class="tag ${npc.gender === '女' ? 'pink' : 'blue'}">${npc.gender}</span>
           <span class="tag">${realmText}</span>
+          <span style="font-size:11px; color:var(--text-gold); margin-left:auto; font-weight:600;">好感 ${npc.aff}/100</span>
         </div>
-        <div class="target-dialogue-quote">${greeting}</div>
-        
-        <div class="target-aff-meter">
-          <span>好感羁绊：${npc.aff}/100</span>
-          <div class="aff-bar-track"><div class="aff-bar-fill" style="width:${npc.aff}%;"></div></div>
-          <span style="font-size:11px; color:var(--text-dim);">${rel.affNextText}</span>
-        </div>
-
-        <div class="social-perks-box">
-          <b>当前等级特权（Lv.${rel.level} ${rel.stage}）：</b>${rel.perkSummary}
-        </div>
-
-        <div class="target-meta">
-          性情：${npc.traits.join("、")}　悟性：${npc.talent}　气度：${npc.ie === 'E' ? '外向健谈' : '内向深沉'}　仪态：${npc.looks}/10
+        <div class="target-dialogue-quote" style="margin:4px 0 6px 0; padding:4px 8px; font-size:12px;">${greeting}</div>
+        <div class="aff-bar-track" style="height:6px; margin-bottom:4px;"><div class="aff-bar-fill" style="width:${npc.aff}%;"></div></div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#d8b878;">
+          <span>特权：${rel.perkSummary}</span>
+          <span style="color:var(--text-dim);">${rel.affNextText}</span>
         </div>
       </div>
 
-      <div class="social-choice-heading">✨ 今日同道机缘话题（动态生成 · 请选择其一参详）：</div>
+      <div class="social-choice-heading" style="font-size:12px; font-weight:bold; color:var(--text-gold); margin:4px 0 6px 0;">✨ 今日同道机缘话题（点击任一参详交流）：</div>
       ${topicsHtml}
     </div>
   `;
 
-  showModal("仙友交流 · " + npc.name, bodyHtml, [
+  showModal("仙友机缘交流 · " + npc.name, bodyHtml, [
     { label: "暂不交流", fn: closeModal }
   ]);
 }
@@ -652,6 +641,7 @@ function resolveDynamicTopic(id, topicIndex) {
   if (!S.flags.npcDailyInteraction) S.flags.npcDailyInteraction = {};
   S.flags.npcDailyInteraction[id] = true;
   npc.lastInteract = S.day;
+  if (typeof triggerDailyTask === "function") triggerDailyTask("social");
 
   // 执行具体话题逻辑
   const result = chosenTopic.resolve(npc);
@@ -1371,17 +1361,251 @@ function triggerDailySocialPerks() {
 
   for (const n of friends) {
     const rel = getNpcRelation(n.aff);
-    if (rel.level >= 6 && chance(0.20)) {
-      // 金兰道侣每日灵犀反哺
-      const expGain = rndInt(20, 36);
+    if (rel.level >= 6 && chance(0.25)) {
+      // 金兰道侣每日灵犀反哺与珍稀馈赠
+      const expGain = rndInt(35, 60);
       if (typeof gainCultivationExp === "function") gainCultivationExp(expGain);
-      log(`【道侣灵犀】${n.name} 与你神识心意相通，清晨灵气反哺：修为经验 +${expGain}。`, "c-pink");
-    } else if (rel.level >= 3 && chance(0.12)) {
-      // 志同道合仙友回礼
-      const giftItems = ["回血丹", "灵草", "泉水", "静心丹"];
+      const giftItems = ["聚气丹", "洗髓丹", "灵草", "饲灵丸"];
       const gift = pick(giftItems);
       if (typeof addItem === "function") addItem(gift, 1);
-      log(`【仙友关怀】清晨，同道仙友 ${n.name} 托杂役弟子送来【${gift}】一枚，道声早安安好。`, "c-gold");
+      log(`【道侣灵犀】${n.name} 与你神识相契，清晨送来【${gift}】，灵犀反哺修为 +${expGain}。`, "c-pink");
+    } else if ((rel.level >= 5 || n.isSworn) && chance(0.35)) {
+      // LV5 结为好友：偶尔会送礼物
+      const giftItems = ["回血丹", "静心丹", "灵草", "饲灵丸", "泉水"];
+      const gift = pick(giftItems);
+      if (typeof addItem === "function") addItem(gift, 1);
+      log(`【好友馈赠】挚友 ${n.name} 清晨托人送来【${gift}】一枚，道声修行珍重。`, "c-gold");
+    } else if (rel.level >= 3 && chance(0.12)) {
+      // 志同道合仙友回礼
+      const gift = pick(["回血丹", "灵草", "泉水"]);
+      if (typeof addItem === "function") addItem(gift, 1);
+      log(`【道友关怀】清晨，同门道友 ${n.name} 送来【${gift}】一枚，互勉修行。`, "c-gold");
     }
   }
+}
+
+/* ============================================================
+   6. 道友特权交互：对战 / 邀请历练 / 结为好友 / 双修
+   ============================================================ */
+
+/* LV3 对战切磋 */
+function duelNpc(npcId) {
+  const npc = S.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  const rel = getNpcRelation(npc.aff);
+  if (rel.level < 3) {
+    showModal("切磋受拒", `<p>${npc.name} 淡淡一礼：「你我交情尚浅，尚未至拔刃切磋、互印玄法之时。」</p><p class="small" style="color:var(--text-dim);">（需好感达到 Lv.3 志同道合 方可切磋对战）</p>`);
+    return;
+  }
+
+  if (S.actionsUsed >= ACTIONS_PER_SLOT) {
+    log("本时段行动力已耗尽。", "c-bad");
+    return;
+  }
+
+  closeModal();
+  log(`【切磋对决】你向道友 ${npc.name} 发起演武切磋，双方于校场以武会友！`, "c-gold");
+
+  // 构造 NPC 敌人对象并启动战斗
+  const enemyDef = {
+    id: "duel_" + npc.id,
+    name: npc.name,
+    realm: npc.realm || 0,
+    sub: npc.sub || 1,
+    hp: 80 + (npc.sub || 1) * 30 + (npc.realm || 0) * 80,
+    mp: 20 + (npc.sub || 1) * 10,
+    atk: 8 + (npc.sub || 1) * 3 + (npc.realm || 0) * 4,
+    def: 4 + (npc.sub || 1) * 2 + (npc.realm || 0) * 3,
+    speed: 10 + (npc.sub || 1),
+    exp: 30 + (npc.sub || 1) * 15,
+    stone: 0,
+    skills: ["sk_slash", "sk_thrust"],
+    spells: [],
+    items: {},
+    isBeast: false,
+    canFlee: true,
+    fleeRate: 0.5
+  };
+
+  S.actionsUsed++;
+  npc.aff = Math.min(100, (npc.aff || 0) + 2);
+  startBattle([enemyDef]);
+}
+
+/* LV4 邀请历练（有机率拒绝，LV6必然答应） */
+function inviteNpcAdventure(npcId) {
+  const npc = S.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  const rel = getNpcRelation(npc.aff);
+  if (rel.level < 4) {
+    showModal("结伴受拒", `<p>${npc.name} 摇头微笑道：「四方凶险莫测，你我相识未久，在下尚有俗务在身，恕难同行。」</p><p class="small" style="color:var(--text-dim);">（需好感达到 Lv.4 莫逆之交 方可邀请历练）</p>`);
+    return;
+  }
+
+  // LV6 必然答应；LV4~5 有机率拒绝（35% 拒绝率）
+  const isGuaranteed = rel.level >= 6;
+  const accepted = isGuaranteed || chance(0.65);
+
+  if (accepted) {
+    S.flags.companionAdventurer = npc.id;
+    const acceptQuote = isGuaranteed
+      ? `「（欣然握住你的手）能与道友同行，纵是龙潭虎穴，在下亦甘之如饴！此行定保周全！」`
+      : `「（抱拳爽朗一笑）既然道友盛情相邀，你我又是莫逆之交，我便舍命陪君子，下山走上一遭！」`;
+
+    showModal("结伴同行 · 历练邀约", `
+      <p style="font-size:14px; color:var(--text-gold);">${npc.name} 欣然应允：</p>
+      <p style="font-style:italic; line-height:1.6; margin:8px 0;">${acceptQuote}</p>
+      <div style="background:rgba(0,0,0,0.3); border:1px solid #3d2f1f; border-radius:6px; padding:8px; font-size:12px; color:#d8b878;">
+        🛡️ <b>结伴增益</b>：本次下山历练期间，${npc.name} 将作为同道护法，战斗中获得伤害加成与气运庇护！
+      </div>
+    `, [
+      { label: "一同启程", primary: true, fn: () => {
+        closeModal();
+        if (typeof onNavSealClick === "function") {
+          onNavSealClick("adventureMap", false);
+        }
+      }}
+    ]);
+  } else {
+    showModal("婉拒邀约", `
+      <p style="font-size:14px; color:var(--text-dim);">${npc.name} 面露歉意：</p>
+      <p style="font-style:italic; line-height:1.6; margin:8px 0;">「道友厚爱，在下心领。奈何近日灵力微滞，师尊命我留在峰内打坐温养，此番实在抽不开身，还望道友海涵！」</p>
+      <p class="small" style="color:#baa88c;">（莫逆之交结伴历练有机率婉拒；升至 Lv.6 金兰道侣 后将必然答应要求）</p>
+    `);
+  }
+}
+
+/* LV5 结为好友 */
+function swearFriendship(npcId) {
+  const npc = S.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  const rel = getNpcRelation(npc.aff);
+  if (rel.level < 5) {
+    showModal("机缘未到", `<p>与 ${npc.name} 尚需更多历练与馈赠交流。（需好感达到 Lv.5 方可正式义结金兰好友）</p>`);
+    return;
+  }
+
+  if (npc.isSworn) {
+    showModal("已结金兰", `<p>你与 ${npc.name} 早已歃血为盟，乃同生共死之至交好友！</p>`);
+    return;
+  }
+
+  npc.isSworn = true;
+  npc.aff = Math.min(100, npc.aff + 5);
+  S.dao = (S.dao || 0) + 3;
+  log(`【金兰之谊】你与 ${npc.name} 焚香对拜，正式结为莫逆挚友！`, "c-gold");
+
+  showModal("义结金兰 · 生死之交", `
+    <div style="text-align:center; padding:10px 0;">
+      <div style="font-size:32px; margin-bottom:8px;">⚔️</div>
+      <h3 style="color:var(--text-gold); margin:0 0 8px;">天道共鉴 · 义结金兰</h3>
+      <p style="line-height:1.6; font-size:13px; color:#c4b494;">
+        「苍天在上，后土在下。今日我二人结为挚友，同心同德，生死相照，仙途漫漫，祸福与共！」
+      </p>
+      <p class="small" style="color:var(--text-gold); margin-top:8px;">
+        ✨ 特权激活：道友清晨将偶尔主动赠送灵草灵丹；道心 +3
+      </p>
+    </div>
+  `, [
+    { label: "善哉！", primary: true, fn: () => { closeModal(); render(); } }
+  ]);
+}
+
+/* LV6 双修闭关 */
+function dualCultivateWithNpc(npcId) {
+  const npc = S.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  const rel = getNpcRelation(npc.aff);
+  if (rel.level < 6) {
+    showModal("境界未契", `<p>${npc.name} 面露赧然：「双修需神魂交融、心意相通至极，你我情意尚需好感达 Lv.6 方可同修。」</p>`);
+    return;
+  }
+
+  if (S.actionsUsed >= ACTIONS_PER_SLOT) {
+    log("本时段行动力已耗尽，请先调息或待下一时辰。", "c-bad");
+    return;
+  }
+
+  S.actionsUsed++;
+  const expGain = rndInt(60, 100);
+  if (typeof gainCultivationExp === "function") gainCultivationExp(expGain);
+  S.dao = (S.dao || 0) + 2;
+  S.mood = Math.min(2, (S.mood || 0) + 1);
+  npc.aff = Math.min(100, (npc.aff || 0) + 1);
+
+  log(`【道侣双修】你与 ${npc.name} 相对盘坐，神识交融，阴阳合契，修为大增！`, "c-pink");
+
+  showModal("道侣双修 · 阴阳神会", `
+    <div style="text-align:center; padding:10px 0;">
+      <div style="font-size:32px; margin-bottom:8px;">💖</div>
+      <h3 style="color:#ff8eb3; margin:0 0 8px;">阴阳契合 · 灵台澄澈</h3>
+      <p style="line-height:1.6; font-size:13px; color:#f0d0d8;">
+        洞府之内，氤氲紫气蒸腾。你与 ${npc.name} 四掌相对，两道本命灵气于经脉中周流回转，天地感应，杂念顿消。
+      </p>
+      <div style="background:rgba(0,0,0,0.3); border:1px solid #5a3040; border-radius:6px; padding:8px; margin-top:8px; font-size:12px; color:#ffb0c8;">
+        ✨ 修为经验 +${expGain} · 道心 +2 · 心情恢复 · 心魔尽退
+      </div>
+    </div>
+  `, [
+    { label: "静心收功", primary: true, fn: () => {
+      closeModal();
+      if (typeof consumeAction === "function") consumeAction();
+      else { save(); render(); }
+    }}
+  ]);
+}
+
+/* 打开道友详细交互选单 */
+function openNpcActionSheet(npcId) {
+  const npc = S.npcs.find(n => n.id === npcId);
+  if (!npc) return;
+  const rel = getNpcRelation(npc.aff);
+  const interacted = hasInteractedToday(npc.id);
+  const gifted = hasGiftedToday(npc.id);
+
+  const html = `
+    <div style="text-align:center; margin-bottom:12px;">
+      <div style="font-size:32px; margin-bottom:4px;">${npc.gender === "女" ? "🧚‍♀️" : "🧑‍🌾"}</div>
+      <h3 style="margin:0; color:var(--text-gold); font-family:var(--font-serif); font-size:16px;">
+        ${npc.name}
+      </h3>
+      <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+        ${npc.role} · ${npc.realm === 0 ? "凡人" : `${REALMS[npc.realm]?.name || '修者'}·${subName(npc.sub)}${npc.sub}重`} · 好感 ${npc.aff}/100
+      </div>
+      <div style="margin-top:6px;">
+        <span class="tag lvl-${rel.level}">${rel.icon} Lv.${rel.level} ${rel.stage}</span>
+        <span style="font-size:11px; color:#d8b878; margin-left:6px;">${rel.perkSummary}</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="list-btn" onclick="closeModal(); openInteract('${npc.id}')" ${interacted ? "disabled" : ""}>
+        💬 动态机缘交流 ${interacted ? "(今日已交流)" : ""}
+      </button>
+
+      <button class="list-btn" onclick="closeModal(); openGiftModal('${npc.id}')" ${gifted ? "disabled" : ""}>
+        🎁 自由馈赠心意 ${gifted ? "(今日已馈赠)" : ""}
+      </button>
+
+      <button class="list-btn" onclick="duelNpc('${npc.id}')" ${rel.level < 3 ? "disabled" : ""}>
+        ⚔️ 演武切磋对战 ${rel.level < 3 ? "(需 Lv.3 志同道合)" : ""}
+      </button>
+
+      <button class="list-btn" onclick="inviteNpcAdventure('${npc.id}')" ${rel.level < 4 ? "disabled" : ""}>
+        🌲 邀请结伴历练 ${rel.level < 4 ? "(需 Lv.4 莫逆之交)" : (rel.level >= 6 ? "(必应)" : "(有机率婉拒)")}
+      </button>
+
+      <button class="list-btn" onclick="swearFriendship('${npc.id}')" ${rel.level < 5 || npc.isSworn ? "disabled" : ""}>
+        🤝 结为金兰好友 ${npc.isSworn ? "(已结拜)" : (rel.level < 5 ? "(需 Lv.5 生死之交)" : "")}
+      </button>
+
+      <button class="list-btn" onclick="dualCultivateWithNpc('${npc.id}')" ${rel.level < 6 ? "disabled" : ""}>
+        💖 道侣双修闭关 ${rel.level < 6 ? "(需 Lv.6 金兰道侣)" : ""}
+      </button>
+    </div>
+  `;
+
+  showModal("道友交互", html, [
+    { label: "离开", fn: closeModal }
+  ]);
 }

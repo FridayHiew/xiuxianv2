@@ -66,7 +66,7 @@ function renderStatus() {
         </div>
       </div>
 
-      <div class="om-hud-time" onclick="switchTab('day')" title="点击前往日常事务">
+      <div class="om-hud-time" onclick="switchTab('day')" title="点击前往仙途">
         <div class="om-time-year">道历${di.year}年 · ${di.monthName}${di.day}日</div>
         <div class="om-time-ap">${HOURS[S.hour] || '上午'} · 行动 <b>${remain}</b>/${ACTIONS_PER_SLOT}</div>
       </div>
@@ -83,7 +83,7 @@ function renderStatus() {
 const SEAL_NAV_ITEMS = [
   { id: "profile",      seal: "人物" },
   { id: "adventureMap", seal: "历练" },
-  { id: "day",          seal: "日常" },
+  { id: "day",          seal: "仙途" },
   { id: "sect",         seal: "宗门" },
   { id: "cave",         seal: "洞府" },
   { id: "bag",          seal: "行囊" },
@@ -106,20 +106,28 @@ function renderTabs() {
     }
   }
 
+  const rank = S.flags?.rank || "杂务";
+  const isAdventureUnlocked = RANKS.indexOf(rank) >= 1;
+
   tabsEl.innerHTML = SEAL_NAV_ITEMS.map(item => {
+    const isAdv = item.id === "adventureMap";
+    const isLocked = isAdv && !isAdventureUnlocked;
     const isActive = currentTab === item.id ||
       (item.id === "cave" && currentTab === "cultivatePage") ||
       (item.id === "day" && (currentTab === "story" || currentTab === "social"));
 
     let showDot = false;
     if (item.id === "day" && remain > 0) showDot = true;
-    if (item.id === "adventureMap" && hasPendingSecret) showDot = true;
+    if (item.id === "adventureMap" && hasPendingSecret && !isLocked) showDot = true;
     if (item.id === "cave" && canBreakNow) showDot = true;
 
     return `
-      <button type="button" class="seal-nav-btn ${isActive ? 'active' : ''}" onclick="switchTab('${item.id}')">
+      <button type="button" class="seal-nav-btn ${isActive ? 'active' : ''} ${isLocked ? 'locked-seal-btn' : ''}"
+              onclick="onNavSealClick('${item.id}', ${isLocked})"
+              title="${isLocked ? '需晋升【门外弟子】方可下山历练' : item.seal}">
         <span class="seal-nav-ring">
           <span class="seal-nav-text">${item.seal}</span>
+          ${isLocked ? '<span class="seal-nav-lock">🔒</span>' : ''}
           ${showDot ? '<span class="seal-nav-dot"></span>' : ''}
         </span>
       </button>
@@ -127,7 +135,37 @@ function renderTabs() {
   }).join("");
 }
 
+function onNavSealClick(id, isLocked) {
+  if (isLocked) {
+    if (typeof showModal === "function") {
+      showModal("🔒 山门禁令 · 历练未启", `
+        <p>山野妖兽狂暴凶厉，杂务弟子根骨尚未成型，不可擅离宗门山境。</p>
+        <p class="small" style="color:var(--text-gold);">需在【宗门大殿】达成考核并晋升为<b>【门外弟子】</b>后，方可获准开启九州历练山河图！</p>
+      `, [{ label: "弟子知晓了", fn: closeModal }]);
+    } else {
+      log("山门禁令：需晋升【门外弟子】后方可下山历练。", "c-bad");
+    }
+    return;
+  }
+  switchTab(id);
+}
+
 function switchTab(id) {
+  if (id === "adventureMap") {
+    const rank = S.flags?.rank || "杂务";
+    if (RANKS.indexOf(rank) < 1) {
+      onNavSealClick(id, true);
+      return;
+    }
+  }
+
+  if (id === "story") {
+    currentTab = "day";
+    daySubPanel = "chapter";
+    render();
+    return;
+  }
+
   const mainHomeTabs = ["profile", "adventureMap", "day", "sect", "cave", "bag"];
   if (mainHomeTabs.includes(currentTab) && !mainHomeTabs.includes(id)) {
     lastMainTab = currentTab;
@@ -138,6 +176,9 @@ function switchTab(id) {
   if (id === "sect") sectSubPanel = null;
   if (id === "cave") caveSubPanel = null;
   if (id === "day") daySubPanel = null;
+  if (typeof _savedPanoramaScroll === "object" && _savedPanoramaScroll) {
+    delete _savedPanoramaScroll[id];
+  }
   render();
 }
 
@@ -149,6 +190,7 @@ function isInFullScreenDetailMode() {
   if (profileOpen || logOpen) return true;
   if (currentTab === "sect" && sectSubPanel) return true;
   if (currentTab === "cave" && caveSubPanel) return true;
+  if (currentTab === "day" && typeof daySubPanel !== "undefined" && daySubPanel) return true;
   if (currentTab === "cultivatePage" || currentTab === "story" || currentTab === "social") return true;
   return false;
 }
@@ -174,9 +216,14 @@ function returnFromDetailPage() {
     closeCaveSubPanel();
     return;
   }
+  if (currentTab === "day" && typeof daySubPanel !== "undefined" && daySubPanel) {
+    if (typeof closeDaySubPanel === "function") closeDaySubPanel();
+    else { daySubPanel = null; render(); }
+    return;
+  }
   const target = (typeof lastMainTab === "string" && ["profile", "adventureMap", "day", "sect", "cave", "bag"].includes(lastMainTab))
     ? lastMainTab
-    : "cave";
+    : "day";
   switchTab(target);
 }
 

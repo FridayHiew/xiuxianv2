@@ -80,9 +80,9 @@ function renderStoryUI() {
 
   /* 3. 当前章节视觉横幅 */
   html += `
-    <div class="story-chapter-banner" style="background-image: linear-gradient(180deg, rgba(6,12,8,0.25) 0%, rgba(8,16,11,0.94) 100%), url('${chapter.bgImage}');">
+    <div class="story-chapter-banner" style="margin-top:16px; min-height:165px; padding:24px 16px 16px; background-image: linear-gradient(180deg, rgba(6,12,8,0.25) 0%, rgba(8,16,11,0.94) 100%), url('${chapter.bgImage}');">
       <div class="story-banner-content">
-        <div class="story-banner-tag">📍 ${fmtStory(chapter.location || '云霄仙境')} · 本章上限：${fmtStory(chapter.maxRealmName)}</div>
+        <div class="story-banner-tag" style="margin-top:8px; margin-bottom:8px; display:inline-block; padding:3px 8px; background:rgba(0,0,0,0.45); border-radius:4px; border:1px solid rgba(212,163,71,0.3);">📍 ${fmtStory(chapter.location || '云霄仙境')} · 本章上限：${fmtStory(chapter.maxRealmName)}</div>
         <h2 class="story-banner-title">${fmtStory(chapter.title)}</h2>
         <div class="story-banner-sub">${fmtStory(chapter.subtitle || '')} · ${fmtStory(chapter.triggerConditionText || '')}</div>
       </div>
@@ -292,14 +292,26 @@ function renderStoryUI() {
 
   const topTabsHtml = `
     <div class="fs-rect-tabs">
-      <button type="button" class="fs-rect-tab active">主线道途</button>
-      <button type="button" class="fs-rect-tab" onclick="switchTab('social')">仙友同道</button>
+      ${STORY_CHAPTERS.map(chap => {
+        const isUnlocked = !!(sp.unlockedChapters && sp.unlockedChapters[chap.id]) || chap.id <= activeChapId;
+        const isActive = chap.id === chapter.id;
+        return `
+          <button type="button"
+                  class="fs-rect-tab ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}"
+                  onclick="openStoryChapterDetail(${chap.id})"
+                  title="${fmtStory(chap.title)}">
+            第${chap.id}章
+          </button>
+        `;
+      }).join("")}
+      <button type="button" class="fs-rect-tab" onclick="openDailyTasksModal()">功课</button>
+      <button type="button" class="fs-rect-tab" onclick="switchTab('social')">道友</button>
     </div>
   `;
 
   return `
     <div class="fs-detail-page">
-      ${typeof renderFullScreenTopBar === "function" ? renderFullScreenTopBar(topTabsHtml, "太源道图 · 主线道途") : topTabsHtml}
+      ${typeof renderFullScreenTopBar === "function" ? renderFullScreenTopBar(topTabsHtml, "太源道图 · 仙途") : topTabsHtml}
       <div class="fs-detail-scroll-body">
         ${html}
       </div>
@@ -333,7 +345,7 @@ function renderMainStoryBannerWidget() {
           <span class="main-story-badge">主线进度 ${summary.totalPct}%</span>
           <b class="main-story-chap-name">${fmtStory(chap.title)}</b>
         </div>
-        <button class="small" onclick="switchTab('story')">进入主线剧场 ▶</button>
+        <button class="small" onclick="openStoryChapterDetail(${chap.id})">进入主线剧场 ▶</button>
       </div>
 
       <div class="main-story-dialog-mini">
@@ -403,16 +415,34 @@ function navigateToStoryQuest(questId, chapId) {
   const quest = chap.quests.find(q => q.id === questId);
   if (!quest) return;
 
+  if (typeof closeDaySubPanel === "function") {
+    daySubPanel = null;
+  }
+
   if (quest.targetType === "dungeon" && quest.dungeonId) {
-    currentTab = "day";
+    currentTab = "adventureMap";
     render();
     enterAdventure(quest.dungeonId);
     return;
   }
 
+  if (quest.targetType === "choreCount" || quest.targetType === "rank" || quest.targetType === "contrib") {
+    switchTab("sect");
+    return;
+  }
+
+  if (quest.targetType === "realm") {
+    if (typeof gotoCultivate === "function") gotoCultivate();
+    else switchTab("cave");
+    return;
+  }
+
   if (quest.actionTab) {
-    currentTab = quest.actionTab;
-    render();
+    if (quest.actionTab === "day") {
+      switchTab("sect");
+    } else {
+      switchTab(quest.actionTab);
+    }
   }
 }
 

@@ -2,11 +2,19 @@
    core/modal.js - 弹窗（通用）
    ============================================================ */
 
-function showModal(title, body, actions) {
+function showModal(title, body, actions, options) {
+  actions = actions || [];
+  const showCloseX = options && options.showCloseX !== undefined ? options.showCloseX : false;
+  const closeBtnHtml = showCloseX
+    ? `<button type="button" class="modal-close-btn" onclick="closeModal()" aria-label="关闭">✕</button>`
+    : "";
+  const actionsHtml = actions.length > 0
+    ? `<div class="actions">${actions.map((a, i) =>
+        `<button class="${a.primary ? 'primary' : ''}" onclick="modalAction(${i})">${a.label}</button>`).join("")}</div>`
+    : "";
+
   document.getElementById("modalBox").innerHTML =
-    `<h3>${title}</h3><div>${body}</div>
-     <div class="actions">${actions.map((a, i) =>
-       `<button onclick="modalAction(${i})">${a.label}</button>`).join("")}</div>`;
+    `${closeBtnHtml}<h3>${title}</h3><div>${body}</div>${actionsHtml}`;
   window._modalActions = actions;
   const mask = document.getElementById("modalMask");
   if (mask) {

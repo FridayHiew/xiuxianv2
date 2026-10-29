@@ -283,14 +283,55 @@ function exchangeFragment(fragId, cost) {
   save(); render();
 }
 
-/* ========== 洞府升级 ========== */
+/* ========== 洞府升级（洞天营造：全部最高10级，当前版本上限3级，含灵兽苑） ========== */
+const CAVE_MAX_LEVEL = 10;
+const CAVE_VERSION_MAX_LEVEL = 3;
+
+const CAVE_FACILITY_META = {
+  spirit:  { name: "聚灵法阵", baseCost: 120 },
+  alchemy: { name: "紫府丹房", baseCost: 50 },
+  forge:   { name: "天机器室", baseCost: 60 },
+  beast:   { name: "灵兽苑",   baseCost: 50 },
+  garden:  { name: "百草药园", baseCost: 40 },
+};
+
 function upgradeCave(key, price) {
-  if (S.stone < price) return;
-  if (key === "spirit" && S.cave.spirit >= 10) { log("灵气密度已达上限。", "c-bad"); return; }
-  S.stone -= price;
-  S.cave[key]++;
-  log(`升级洞府：${key} Lv.${S.cave[key]}。`, "c-gold");
-  save(); render();
+  if (!S.cave) S.cave = { level: 0, spirit: 0, alchemy: 0, forge: 0, beast: 0, garden: 0 };
+  const curLv = S.cave[key] || 0;
+  const meta = CAVE_FACILITY_META[key] || { name: key, baseCost: 50 };
+  const actualPrice = price !== undefined ? price : meta.baseCost * (curLv + 1);
+
+  if (curLv >= CAVE_MAX_LEVEL) {
+    log(`【${meta.name}】已达最高等级 Lv.${CAVE_MAX_LEVEL}。`, "c-bad");
+    return;
+  }
+  if (curLv >= CAVE_VERSION_MAX_LEVEL) {
+    log(`【${meta.name}】已达当前版本最高等级 Lv.${CAVE_VERSION_MAX_LEVEL}（最高上限 Lv.${CAVE_MAX_LEVEL}）。`, "c-bad");
+    return;
+  }
+  if ((S.stone || 0) < actualPrice) {
+    log(`灵石不足（需 ${actualPrice} 灵石，当前持有 ${S.stone || 0} 灵石）。`, "c-bad");
+    return;
+  }
+
+  S.stone -= actualPrice;
+  S.cave[key] = curLv + 1;
+  S.cave.level = Math.max(
+    S.cave.level || 0,
+    S.cave.spirit || 0,
+    S.cave.alchemy || 0,
+    S.cave.forge || 0,
+    S.cave.beast || 0,
+    S.cave.garden || 0
+  );
+
+  if (key === "beast") {
+    log(`【洞天营造】消耗 ${actualPrice} 灵石升级【${meta.name}】至 Lv.${S.cave[key]}/${CAVE_MAX_LEVEL}，灵兽容量上限提升至 ${1 + S.cave[key]} 只！`, "c-gold");
+  } else {
+    log(`【洞天营造】消耗 ${actualPrice} 灵石升级【${meta.name}】至 Lv.${S.cave[key]}/${CAVE_MAX_LEVEL}。`, "c-gold");
+  }
+  save();
+  render();
 }
 
 /* ========== 兑换法术秘籍 ========== */
@@ -323,22 +364,54 @@ function exchangeSummonBook(bookId, cost) {
   save(); render();
 }
 
-/* ========== 购买装备 ========== */
+/* ========== 购买装备（宗门仅限兑换 1 品武器/装备） ========== */
 function buyShopEquip(id, price) {
   if (S.contrib < price) { log("贡献不足。", "c-bad"); return; }
 
   const eq = ITEMS[id];
   if (!eq) { log("装备不存在。", "c-bad"); return; }
 
+  const grade = eq.grade || 1;
+  if (grade > 1) {
+    log("宗门武库仅提供【1品】基础武器与装备兑换，更高品级请兑换【炼器谱】后自行锻造。", "c-bad");
+    return;
+  }
+
   if (hasItem(id)) { log("已拥有该装备。", "c-bad"); return; }
 
   S.contrib -= price;
   addItem(id, 1);
 
-  log(`你购买了【${eq.name}】。`, "c-gold");
+  log(`你兑换了【1品·${eq.name}】。`, "c-gold");
   save(); render();
-  showActionModal("购买成功", [
-    `获得：${eq.name}`,
-    `可在【角色>背包>装备】中装配`,
+  showActionModal("兑换成功", [
+    `获得：${eq.name}（${eq.tier || 1}阶·${grade}品）`,
+    `可在【角色>行囊>装备】中查看与装配`,
   ]);
+}
+
+/* ========== 宗门兑换炼器谱（仅限金丹期 realm <= 3 及以下） ========== */
+function unlockForgeRecipe(recipeId, cost) {
+  const recipe = typeof getForgeRecipe === "function" ? getForgeRecipe(recipeId) : null;
+  if (!recipe) return { ok: false, reason: "炼器谱不存在" };
+
+  if (typeof isForgeRecipeExchangeableInSect === "function" && !isForgeRecipeExchangeableInSect(recipe)) {
+    return { ok: false, reason: "宗门仅传授金丹期及以下（1~6品）的炼器谱" };
+  }
+
+  if (!S.flags) S.flags = {};
+  if (!S.flags.knownForgeRecipes) S.flags.knownForgeRecipes = {};
+  if (S.flags.knownForgeRecipes[recipeId]) {
+    return { ok: false, reason: "已掌握该炼器谱" };
+  }
+
+  const finalCost = cost !== undefined ? cost : (typeof getForgeRecipeExchangePrice === "function" ? getForgeRecipeExchangePrice(recipe) : 50);
+  if (S.contrib < finalCost) {
+    return { ok: false, reason: `贡献不足（需 ${finalCost} 贡献）` };
+  }
+
+  S.contrib -= finalCost;
+  S.flags.knownForgeRecipes[recipeId] = true;
+  log(`你消耗 ${finalCost} 宗门贡献，习得炼器谱《${recipe.name}》！`, "c-gold");
+  return { ok: true, recipe, cost: finalCost };
 }

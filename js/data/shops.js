@@ -96,16 +96,16 @@ const SECT_ART_SHOP = {
 
 const SECT_SPELL_SHOP = {
   _common: [
-    { spellId: "jianqi_zhan", realm: 1, price: 80  },
-    { spellId: "bengquan",    realm: 1, price: 60  },
-    { spellId: "bingzhang",   realm: 1, price: 150 },
-    { spellId: "kuangdao",    realm: 1, price: 200 },
-    { spellId: "saodi",       realm: 1, price: 120 },
-    { spellId: "lingqi_bo",   realm: 1, price: 90  },
-    { spellId: "huojian",     realm: 1, price: 100 },
-    { spellId: "huoyanjian",  realm: 2, price: 300 },
-    { spellId: "lieyanjian",  realm: 2, price: 800 },
-    { spellId: "liehuoquan",  realm: 2, price: 260 },
+    { spellId: "jianqi_zhan", realm: [0, 1, 2, 3], price: 80  },
+    { spellId: "bengquan",    realm: [0, 1, 2, 3], price: 60  },
+    { spellId: "bingzhang",   realm: [0, 1, 2, 3], price: 150 },
+    { spellId: "kuangdao",    realm: [0, 1, 2, 3], price: 200 },
+    { spellId: "saodi",       realm: [0, 1, 2, 3], price: 120 },
+    { spellId: "lingqi_bo",   realm: [0, 1, 2, 3], price: 90  },
+    { spellId: "huojian",     realm: [0, 1, 2, 3], price: 100 },
+    { spellId: "huoyanjian",  realm: [0, 1, 2, 3], price: 300 },
+    { spellId: "lieyanjian",  realm: [0, 1, 2, 3], price: 800 },
+    { spellId: "liehuoquan",  realm: [0, 1, 2, 3], price: 260 },
   ],
 
   qingyun: [],
@@ -131,29 +131,33 @@ const SECT_SPELL_SHOP = {
 
 const SECT_EQUIP_SHOP = {
   _common: [
-    /* 凡品套装（炼气） */
-    { itemId: "shop_head1",   realm: 1, price: 30  },
-    { itemId: "shop_sword1",  realm: 1, price: 50  },
-    { itemId: "shop_shield1", realm: 1, price: 40  },
-    { itemId: "shop_body1",   realm: 1, price: 60  },
-    { itemId: "shop_shoes1",  realm: 1, price: 25  },
-    { itemId: "shop_ring1",   realm: 1, price: 35  },
-    { itemId: "shop_ring2",   realm: 1, price: 35  },
-    { itemId: "shop_art_huo", realm: 1, price: 120 },
-    { itemId: "shop_art_jin", realm: 1, price: 120 },
-    { itemId: "shop_art_mu",  realm: 1, price: 120 },
+    /* 宗门武器库仅限兑换 1 品（1阶·1品）基础兵器与护身法器；2品及以上装备需兑换【炼器谱】后于洞府炼制 */
+    /* 一品宗门四艺主兵器（剑/刀/棍/鞭） */
+    { itemId: "e_sword1",     realm: [0, 1, 2, 3], setName: "一品宗门制式兵器", price: 30  },
+    { itemId: "e_blade1",     realm: [0, 1, 2, 3], setName: "一品宗门制式兵器", price: 30  },
+    { itemId: "e_staff1",     realm: [0, 1, 2, 3], setName: "一品宗门制式兵器", price: 30  },
+    { itemId: "e_whip1",      realm: [0, 1, 2, 3], setName: "一品宗门制式兵器", price: 30  },
 
-    /* 灵品套装（筑基） */
-    { itemId: "shop_head2",   realm: 2, price: 150 },
-    { itemId: "shop_sword2",  realm: 2, price: 250 },
-    { itemId: "shop_shield2", realm: 2, price: 180 },
-    { itemId: "shop_body2",   realm: 2, price: 300 },
-    { itemId: "shop_shoes2",  realm: 2, price: 120 },
-    { itemId: "shop_ring3",   realm: 2, price: 200 },
-    { itemId: "shop_ring4",   realm: 2, price: 200 },
-    { itemId: "shop_art_shui",realm: 2, price: 500 },
-    { itemId: "shop_art_lei", realm: 2, price: 500 },
-    { itemId: "shop_art_bing",realm: 2, price: 500 },
+    /* 凡铁护身七件套（1阶·1品） */
+    { itemId: "fan_sword",    realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 40  },
+    { itemId: "fan_shield",   realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 35  },
+    { itemId: "fan_head",     realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 25  },
+    { itemId: "fan_body",     realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 45  },
+    { itemId: "fan_shoes",    realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 20  },
+    { itemId: "fan_pendant",  realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 30  },
+    { itemId: "fan_artifact", realm: [0, 1, 2, 3], setName: "凡铁护身套（一品）", price: 60  },
+
+    /* 一品散件补充（1阶·1品） */
+    { itemId: "shop_sword1",  realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 50  },
+    { itemId: "shop_shield1", realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 40  },
+    { itemId: "shop_head1",   realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 30  },
+    { itemId: "shop_body1",   realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 60  },
+    { itemId: "shop_shoes1",  realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 25  },
+    { itemId: "shop_ring1",   realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 35  },
+    { itemId: "shop_ring2",   realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 35  },
+    { itemId: "shop_art_huo", realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 120 },
+    { itemId: "shop_art_jin", realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 120 },
+    { itemId: "shop_art_mu",  realm: [0, 1, 2, 3], setName: "一品精铸散件", price: 120 },
   ],
 
   qingyun: [],
@@ -204,10 +208,13 @@ function getSummonShopItems(sectId) {
   return list;
 }
 
-/* 按玩家境界过滤 */
+/* 按玩家境界过滤（凡人可查阅练气入门条目，高境界可查阅低境界所有已开放条目） */
 function filterShopByRealm(items, playerRealm) {
   return items.filter(item => {
     if (Array.isArray(item.realm)) return item.realm.includes(playerRealm);
-    return item.realm === playerRealm;
+    if (typeof item.realm === "number") {
+      return item.realm <= Math.max(1, playerRealm);
+    }
+    return true;
   });
 }

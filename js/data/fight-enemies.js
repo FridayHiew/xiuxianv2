@@ -48,6 +48,11 @@ const FIGHT_ENEMIES = {
       skills: [], spells: [], items: {}, resistances: {},
       ai: "simple", isBeast: true, tameRate: 0.26, canFlee: true, fleeRate: 0.4, exp: 36, stone: 16 },
 
+    { id: "e_white_fox", name: "雪灵白狐幼兽", realm: 1, sub: 1,
+      hp: 65, mp: 30, atk: 8, def: 2, speed: 16,
+      skills: ["sk_fist1"], spells: ["lingqi_bo"], items: {}, resistances: { freeze: 30 },
+      ai: "simple", isBeast: true, tameRate: 0.35, canFlee: true, fleeRate: 0.45, exp: 38, stone: 18 },
+
     { id: "e_toad_tiny", name: "凝露小灵蟾", realm: 1, sub: 1,
       hp: 75, mp: 30, atk: 7, def: 3, speed: 10,
       skills: [], spells: [], attackInflict: { poison: 0.15 },
@@ -525,9 +530,19 @@ const FIGHT_ENEMIES = {
   ]
 };
 
+const LEGACY_ENEMY_ID_MAP = {
+  e_snake: "e_white_snake_tiny",
+  e_boar: "e_boar_iron",
+  e_tiger: "e_tianji_iron_tiger",
+  e_chaos: "e_asura_scout",
+  e_spider: "e_cloud_spider",
+  e_bear: "e_bear_black",
+};
+
 function getEnemyById(id) {
+  const targetId = LEGACY_ENEMY_ID_MAP[id] || id;
   for (const tier in FIGHT_ENEMIES) {
-    const found = FIGHT_ENEMIES[tier].find(e => e.id === id);
+    const found = FIGHT_ENEMIES[tier].find(e => e.id === targetId || e.id === id);
     if (found) return found;
   }
   return null;

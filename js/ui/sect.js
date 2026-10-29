@@ -111,6 +111,11 @@ function renderSect() {
   const nextReq = nextRank ? RANK_REQ[nextRank] : null;
   const masterName = (S.master && S.npcMap && S.npcMap[S.master]) ? S.npcMap[S.master].name : "暂未拜师";
   const peakName = S.peak ? (PEAKS.find(p => p.id === S.peak)?.name || "主峰") : "外山杂役院";
+  const remain = Math.max(0, ACTIONS_PER_SLOT - (S.actionsUsed || 0));
+  const isWeekend = (S.weekday === 0 || S.weekday === 6);
+  const dq = S.dailyQuest;
+  const dqDone = dq ? dq.done >= dq.amount : true;
+  const activeTasks = (S.flags && S.flags.activeTasks) || [];
 
   return `
     <div class="ink-panorama-viewport">
@@ -123,12 +128,15 @@ function renderSect() {
             <span class="cinnabar-tag">${sect.camp}</span>
             ${sect.name}
           </div>
-          <div class="plaque-sub">身份：<b>${rank}弟子</b> · 贡献：<b>${fmt(S.contrib)}</b></div>
+          <div class="plaque-sub">身份：<b>${rank}弟子</b> · 贡献：<b>${fmt(S.contrib)}</b> · 行动 <b>${remain}/${ACTIONS_PER_SLOT}</b></div>
         </div>
 
         <div class="ink-top-right-seals">
           <button type="button" class="ink-mini-seal ${canPromote ? 'glow' : ''}" onclick="openSectSubPanel('简介')" title="身份晋升">
             <span>晋升</span>
+          </button>
+          <button type="button" class="ink-mini-seal" onclick="openSectSubPanel('杂役铺')" title="杂役百货">
+            <span>百货</span>
           </button>
           <button type="button" class="ink-mini-seal" onclick="openSectRankBoard()" title="同门战榜">
             <span>战榜</span>
@@ -140,41 +148,52 @@ function renderSect() {
       </div>
 
       <!-- 可左右滑动/拖拽的宽幅宗门群峰水墨长卷 -->
-      <div class="ink-panorama-scroll scrollable-landscape" data-init-align="center">
+      <div class="ink-panorama-scroll scrollable-landscape" data-init-align="left">
         <div class="ink-scene-canvas sect-panorama ink-panorama-world">
           <img class="ink-scene-bg" src="./src/assets/images/sect_mountain_gate_1792114544883.jpg" alt="${sect.name}水墨山门" referrerPolicy="no-referrer">
           <div class="ink-scene-wash-overlay"></div>
           <div class="ink-watermark-vertical">${sect.name}</div>
 
-          <!-- 左翼西峰圆章：杂役百货、传功大殿、宗门事务 -->
-          <button type="button" class="ink-seal-node pos-tl" onclick="openSectSubPanel('杂役铺')">
+          <!-- 左翼西峰圆章：今日杂务/周末传功、山门巡弋、演武百艺 -->
+          ${isWeekend ? `
+            <button type="button" class="ink-seal-node pos-tl ${remain > 0 && S.hour !== 2 ? 'glow-node' : ''}" onclick="openWeekendLectureModal()">
+              <span class="node-char">
+                讲
+                <em class="seal-red-stamp">周末</em>
+              </span>
+              <span class="node-caption">宗门传功</span>
+              <span class="node-sub-hint">长老法筵传道</span>
+            </button>
+          ` : `
+            <button type="button" class="ink-seal-node pos-tl ${!dqDone && S.hour !== 2 && remain > 0 ? 'glow-node' : ''}" onclick="openSectChoreAndTaskModal()">
+              <span class="node-char">
+                务
+                <em class="seal-red-stamp">${!dqDone ? `${dq.done}/${dq.amount}` : (activeTasks.length ? `悬赏${activeTasks.length}` : '差事')}</em>
+              </span>
+              <span class="node-caption">${!dqDone ? dq.chore.name : '宗门杂务'}</span>
+              <span class="node-sub-hint">指派差事与悬赏</span>
+            </button>
+          `}
+
+          <button type="button" class="ink-seal-node pos-ml" onclick="openMountainPatrolModal()">
             <span class="node-char">
-              杂
-              <em class="seal-red-stamp">百货</em>
+              巡
+              <em class="seal-red-stamp">巡山</em>
             </span>
-            <span class="node-caption">杂役百货</span>
-            <span class="node-sub-hint">日常器物采买</span>
+            <span class="node-caption">山门巡弋</span>
+            <span class="node-sub-hint">山门防务巡查</span>
           </button>
 
-          <button type="button" class="ink-seal-node pos-ml" onclick="openSectSubPanel('传功殿')">
+          <button type="button" class="ink-seal-node pos-bl" onclick="openDailyPracticeModal()">
             <span class="node-char">
-              传
-              <em class="seal-red-stamp">功法</em>
+              武
+              <em class="seal-red-stamp">百艺</em>
             </span>
-            <span class="node-caption">传功大殿</span>
-            <span class="node-sub-hint">心法法术参学</span>
+            <span class="node-caption">演武百艺</span>
+            <span class="node-sub-hint">同门切磋与研习</span>
           </button>
 
-          <button type="button" class="ink-seal-node pos-bl" onclick="openSectSubPanel('宗门事务')">
-            <span class="node-char">
-              务
-              <em class="seal-red-stamp">劳作</em>
-            </span>
-            <span class="node-caption">宗门事务</span>
-            <span class="node-sub-hint">杂务熟练一览</span>
-          </button>
-
-          <!-- 中央主峰：宗门大殿 + 道统画心 + 万宝坊市 -->
+          <!-- 中央主峰：宗门大殿 + 道统画心 + 万宝坊市/杂役百货 -->
           <button type="button" class="ink-seal-node pos-center-top ${canPromote ? 'glow-node' : ''}" onclick="openSectSubPanel('简介')">
             <span class="node-char">
               殿
@@ -211,45 +230,34 @@ function renderSect() {
               <span class="node-sub-hint">奇珍异宝竞拍</span>
             </button>
           ` : `
-            <button type="button" class="ink-seal-node pos-center-bottom locked-node" onclick="openSectSubPanel('坊市')">
+            <button type="button" class="ink-seal-node pos-center-bottom" onclick="openSectSubPanel('杂役铺')">
               <span class="node-char">
-                市
-                <em class="seal-red-stamp">内门</em>
+                杂
+                <em class="seal-red-stamp">百货</em>
               </span>
-              <span class="node-caption">万宝坊市</span>
-              <span class="node-sub-hint">内门弟子开放</span>
+              <span class="node-caption">杂役百货</span>
+              <span class="node-sub-hint">日常器物采买</span>
             </button>
           `}
 
-          <!-- 右翼东峰圆章：藏经丹阁、丹方秘阁/同门战榜、神兵利器 -->
-          <button type="button" class="ink-seal-node pos-tr ${!isMennei ? 'locked-node' : ''}" onclick="openSectSubPanel('藏经阁')">
+          <!-- 右翼东峰圆章：传功大殿、藏经丹阁、神兵利器 -->
+          <button type="button" class="ink-seal-node pos-tr" onclick="openSectSubPanel('传功殿')">
             <span class="node-char">
-              藏
-              <em class="seal-red-stamp">${isMennei ? '灵丹' : '内门'}</em>
+              传
+              <em class="seal-red-stamp">功法</em>
             </span>
-            <span class="node-caption">藏经丹阁</span>
-            <span class="node-sub-hint">九品灵丹兑换</span>
+            <span class="node-caption">传功大殿</span>
+            <span class="node-sub-hint">心法法术参学</span>
           </button>
 
-          ${isMennei ? `
-            <button type="button" class="ink-seal-node pos-mr" onclick="openSectSubPanel('丹方阁')">
-              <span class="node-char">
-                丹
-                <em class="seal-red-stamp">1~2阶</em>
-              </span>
-              <span class="node-caption">丹方秘阁</span>
-              <span class="node-sub-hint">秘传丹方参悟</span>
-            </button>
-          ` : `
-            <button type="button" class="ink-seal-node pos-mr" onclick="openSectRankBoard()">
-              <span class="node-char">
-                榜
-                <em class="seal-red-stamp">争锋</em>
-              </span>
-              <span class="node-caption">同门战榜</span>
-              <span class="node-sub-hint">切磋角逐排名</span>
-            </button>
-          `}
+          <button type="button" class="ink-seal-node pos-mr ${!isMennei ? 'locked-node' : ''}" onclick="openSectSubPanel('藏经阁')">
+            <span class="node-char">
+              藏
+              <em class="seal-red-stamp">${isMennei ? '丹经' : '内门'}</em>
+            </span>
+            <span class="node-caption">藏经丹阁</span>
+            <span class="node-sub-hint">灵丹与丹方参悟</span>
+          </button>
 
           <button type="button" class="ink-seal-node pos-br" onclick="openSectSubPanel('装备铺')">
             <span class="node-char">
@@ -264,9 +272,9 @@ function renderSect() {
 
       <!-- 底部横向长卷导览罗盘 -->
       <div class="ink-panorama-compass">
-        <button type="button" class="pano-compass-btn" data-pos="left" onclick="panPanorama('left')">◀ 西峰·传功</button>
-        <button type="button" class="pano-compass-btn active" data-pos="center" onclick="panPanorama('center')">🏯 主峰·大殿</button>
-        <button type="button" class="pano-compass-btn" data-pos="right" onclick="panPanorama('right')">东峰·丹器 ▶</button>
+        <button type="button" class="pano-compass-btn active" data-pos="left" onclick="panPanorama('left')">◀ 西峰·演武差事</button>
+        <button type="button" class="pano-compass-btn" data-pos="center" onclick="panPanorama('center')">🏯 主峰·大殿</button>
+        <button type="button" class="pano-compass-btn" data-pos="right" onclick="panPanorama('right')">东峰·传功丹器 ▶</button>
       </div>
 
       <div class="ink-scroll-roller bottom"></div>
@@ -307,7 +315,32 @@ function renderSectInfo(sect, rank) {
 }
 
 function renderSectTasks(rank) {
-  let html = `<h4>宗门劳作与事务熟练度</h4>`;
+  const remain = Math.max(0, ACTIONS_PER_SLOT - (S.actionsUsed || 0));
+  const isWeekend = (S.weekday === 0 || S.weekday === 6);
+  const dq = S.dailyQuest;
+  const dqDone = dq ? dq.done >= dq.amount : true;
+  const activeTasks = (S.flags && S.flags.activeTasks) || [];
+
+  let html = `<h4>宗门差事、巡山与演武（剩余行动：${remain}/${ACTIONS_PER_SLOT}）</h4>`;
+  html += `
+    <div class="card" style="margin-bottom:12px;">
+      <div class="row" style="margin-bottom:8px;">
+        <span>${isWeekend ? '📖 周末宗门传功法筵' : (dq ? `🧹 今日指派：${dq.chore.name}（${dq.done}/${dq.amount}）` : '🧹 今日指派杂务已毕')}</span>
+        ${isWeekend
+          ? `<button class="primary small" onclick="openWeekendLectureModal()">前往听讲</button>`
+          : `<button class="${!dqDone ? 'primary ' : ''}small" onclick="onDayChoreNodeClick()">${!dqDone ? '执行指派' : '自由劳作'}</button>`
+        }
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <button class="small" onclick="openChoreSelector()">🪓 自由打杂</button>
+        ${rank !== "杂务" ? `<button class="small" onclick="openTaskSelector()">📋 宗门悬赏${activeTasks.length ? '(' + activeTasks.length + ')' : ''}</button>` : ""}
+        <button class="small" onclick="openMountainPatrolModal()">🛡️ 山门巡弋</button>
+        <button class="small" onclick="openDailyPracticeModal()">⚔️ 演武百艺</button>
+      </div>
+    </div>
+  `;
+
+  html += `<h4>宗门劳作与事务熟练度</h4>`;
   const chores = rank === "杂务" ? CHORES_FAN : rank === "门外" ? CHORES_MENWAI : CHORES_MENNEI;
   html += `<div class="parchment-list-wrap">`;
   chores.forEach(c => {
@@ -330,6 +363,16 @@ function renderSectTasks(rank) {
    杂役铺 (极简名字行 + 点击弹窗购买)
    ============================================================ */
 
+function getShopItemCategoryName(it) {
+  if (!it) return "器物";
+  const catMap = { A: "工具", B: "杂货", C: "闲趣", D: "补给" };
+  if (it.cat && catMap[it.cat]) return catMap[it.cat];
+  if (it.hobby) return "闲趣";
+  if (it.chore) return "工具";
+  if (it.cat && ["A", "B", "C", "D"].includes(it.cat)) return "器物";
+  return it.cat || "器物";
+}
+
 function renderShop() {
   if (currentShopDay !== S.day) refreshShop();
   const cur = getCurrency();
@@ -341,12 +384,13 @@ function renderShop() {
     if (!it) return;
     const owned = !!S.tools[itemId];
     const canBuy = !owned && cur >= it.price;
+    const catLabel = getShopItemCategoryName(it);
     html += `
       <div class="parchment-item-row" onclick="openShopItemModal('${itemId}')">
         <div class="p-row-left">
           <div class="p-row-icon">🧰<span class="p-icon-qty">1</span></div>
           <span class="p-row-name tier-green">${it.name}</span>
-          <span class="p-row-badge">${it.cat || '器物'}</span>
+          <span class="p-row-badge">${catLabel}</span>
         </div>
         <div class="fs-card-right-group">
           <span class="fs-card-cost">🪙 ${it.price}</span>
@@ -367,10 +411,11 @@ function openShopItemModal(itemId) {
   const owned = !!S.tools[itemId];
   const cur = getCurrency();
   const canBuy = !owned && cur >= it.price;
+  const catLabel = getShopItemCategoryName(it);
 
   showModal(`🧰 器物详情 · ${it.name}`, `
     <div class="card">
-      <div class="row"><span>器物类别</span><b>${it.cat || '杂务'}类</b></div>
+      <div class="row"><span>器物类别</span><b>${catLabel}类</b></div>
       <div class="row"><span>售价</span><b>${it.price} ${currencyName()}（拥有 ${cur}）</b></div>
     </div>
     <p>${it.desc || "宗门特制实用器物。"}</p>
@@ -627,8 +672,25 @@ function openExchangeSpellModal(spellId, bookId, price) {
    藏经阁 (丹药贡献兑换：极简名字行 + 点击弹窗兑换)
    ============================================================ */
 
+let currentLibraryTab = "pills";
+
+function switchLibraryTab(t) {
+  currentLibraryTab = t;
+  render();
+}
+
 function renderLibrary() {
-  let html = `<p class="small">点击丹药名字选择品级并用贡献兑换（当前贡献：<b>${S.contrib}</b>）。</p>`;
+  const sect = SECTS.find(s => s.id === S.sect) || SECTS[0];
+  let html = `<div class="om-bag-tabs" style="margin-bottom:8px;">`;
+  html += `<button type="button" class="om-bag-tab ${currentLibraryTab === 'pills' ? 'active' : ''}" onclick="switchLibraryTab('pills')">💊 灵丹宝库</button>`;
+  html += `<button type="button" class="om-bag-tab ${currentLibraryTab === 'spells' ? 'active' : ''}" onclick="switchLibraryTab('spells')">✨ 藏经法术</button>`;
+  html += `</div>`;
+
+  if (currentLibraryTab === "spells") {
+    return html + renderSectSpells(sect);
+  }
+
+  html += `<p class="small">点击丹药名字选择品级并用贡献兑换（当前贡献：<b>${S.contrib}</b>）。</p>`;
 
   const exchangeList = [
     { baseId: "回血丹", maxGrade: 5 },
@@ -642,7 +704,7 @@ function renderLibrary() {
 
   html += `<div class="parchment-list-wrap">`;
   exchangeList.forEach(({ baseId, maxGrade }) => {
-    const baseItem = ITEMS[baseId + "_1"];
+    const baseItem = (typeof getItem === "function" ? getItem(baseId + "_1") : null) || ITEMS[baseId + "_1"];
     if (!baseItem) return;
     const minCost = Math.floor((baseItem.price || 5) * 2);
 
@@ -662,23 +724,24 @@ function renderLibrary() {
 }
 
 function openLibraryPillModal(baseId, maxGrade) {
-  const baseItem = ITEMS[baseId + "_1"];
+  const baseItem = (typeof getItem === "function" ? getItem(baseId + "_1") : null) || ITEMS[baseId + "_1"];
   if (!baseItem) return;
 
   let rows = `<div class="parchment-list-wrap">`;
   for (let g = 1; g <= maxGrade; g++) {
     const itemId = baseId + "_" + g;
-    const item = ITEMS[itemId];
+    const item = (typeof getItem === "function" ? getItem(itemId) : null) || ITEMS[itemId];
     if (!item) continue;
-    const contribCost = Math.floor((item.price || 0) * 2);
+    const contribCost = Math.floor((item.price || 5) * 2);
     const owned = (S.inventory && S.inventory[itemId]) || 0;
     const canBuy = S.contrib >= contribCost;
+    const itemName = (item.name && item.name !== "undefined") ? item.name : baseId;
 
     rows += `
       <div class="parchment-item-row" onclick="showItemDetailModal('${itemId}')">
         <div class="p-row-left">
           <div class="p-row-icon">💊</div>
-          <span class="p-row-name ${g >= 5 ? 'tier-gold' : g >= 3 ? 'tier-blue' : 'tier-green'}">${item.name}（${g}品）</span>
+          <span class="p-row-name ${g >= 5 ? 'tier-gold' : g >= 3 ? 'tier-blue' : 'tier-green'}">${itemName}（${g}品）</span>
           ${owned > 0 ? `<span class="p-row-badge">有×${owned}</span>` : ''}
         </div>
         <button class="small" onclick="event.stopPropagation(); exchange('${itemId}', ${contribCost}); openLibraryPillModal('${baseId}', ${maxGrade});" ${canBuy ? "" : "disabled"}>
@@ -696,11 +759,35 @@ function openLibraryPillModal(baseId, maxGrade) {
 }
 
 /* ============================================================
-   丹方阁 (仅门内显示，且仅限 1~2 阶丹方：极简名字行 + 点击弹窗购买)
+   丹方阁 (支持切换【丹方秘卷】与【炼器图谱（金丹及以下）】)
    ============================================================ */
 
+let currentRecipeShopMode = "alchemy"; // "alchemy" | "forge"
+let currentForgeRecipeShopRealm = "all"; // "all" | 0 | 1 | 2 | 3
+
+function switchRecipeShopMode(mode) {
+  currentRecipeShopMode = mode;
+  render();
+}
+
+function switchForgeRecipeShopRealm(realmFilter) {
+  currentForgeRecipeShopRealm = realmFilter;
+  render();
+}
+
 function renderRecipeShop() {
-  let html = `<p class="small">点击丹方名称查看详情与配方并用贡献解锁（仅授一至二阶丹方，当前贡献：<b>${S.contrib}</b>）。</p>`;
+  let html = `
+    <div class="om-bag-tabs" style="margin-bottom:8px;">
+      <button type="button" class="om-bag-tab ${currentRecipeShopMode === 'alchemy' ? 'active' : ''}" onclick="switchRecipeShopMode('alchemy')">💊 丹方秘卷</button>
+      <button type="button" class="om-bag-tab ${currentRecipeShopMode === 'forge' ? 'active' : ''}" onclick="switchRecipeShopMode('forge')">⚒️ 炼器图谱</button>
+    </div>
+  `;
+
+  if (currentRecipeShopMode === "forge") {
+    return html + renderSectForgeRecipeExchangeList();
+  }
+
+  html += `<p class="small">点击丹方名称查看详情与配方并用贡献解锁（仅授一至二阶丹方，当前贡献：<b>${S.contrib}</b>）。</p>`;
 
   if (typeof RECIPES === "undefined" || !RECIPES) {
     return html + `<p class="empty">丹方数据未加载。</p>`;
@@ -727,6 +814,126 @@ function renderRecipeShop() {
   });
   html += `</div>`;
   return html;
+}
+
+/* 宗门炼器谱兑换列表（严格限制：金丹期 realm <= 3 及以下） */
+function renderSectForgeRecipeExchangeList() {
+  let html = `<p class="small">宗门器谱阁仅传授<b>【金丹期及以下（1~6品）】</b>炼器图谱，参悟后可在【洞府 > 炼器房】锻造神兵法器（当前贡献：<b>${S.contrib}</b>）。</p>`;
+
+  if (typeof FORGE_RECIPES === "undefined" || !FORGE_RECIPES) {
+    return html + `<p class="empty">炼器谱数据未加载。</p>`;
+  }
+
+  const realmTabs = [
+    { key: "all", label: "全部(金丹及以下)" },
+    { key: 0, label: "凡人·1品" },
+    { key: 1, label: "炼气·2~3品" },
+    { key: 2, label: "筑基·4~5品" },
+    { key: 3, label: "金丹·6品" },
+  ];
+
+  html += `<div class="om-bag-tabs" style="margin-bottom:8px;">`;
+  realmTabs.forEach(t => {
+    const active = String(currentForgeRecipeShopRealm) === String(t.key) ? "active" : "";
+    const arg = t.key === "all" ? "'all'" : t.key;
+    html += `<button type="button" class="om-bag-tab ${active}" onclick="switchForgeRecipeShopRealm(${arg})">${t.label}</button>`;
+  });
+  html += `</div>`;
+
+  /* 严格过滤：只允许兑换金丹期（realm <= 3 且 grade <= 6）及以下的炼器谱 */
+  const allowedRecipes = FORGE_RECIPES.filter(r => {
+    if (typeof isForgeRecipeExchangeableInSect === "function") {
+      return isForgeRecipeExchangeableInSect(r);
+    }
+    const rm = r.realm !== undefined ? r.realm : (r.grade <= 1 ? 0 : r.grade <= 3 ? 1 : r.grade <= 5 ? 2 : r.grade === 6 ? 3 : 4);
+    return rm <= 3 && (r.grade || 1) <= 6;
+  }).filter(r => {
+    if (currentForgeRecipeShopRealm === "all") return true;
+    const rm = typeof getForgeRecipeRealm === "function" ? getForgeRecipeRealm(r) : (r.realm || 0);
+    return rm === Number(currentForgeRecipeShopRealm);
+  });
+
+  if (allowedRecipes.length === 0) {
+    return html + `<p class="empty">该境界暂无可兑换的炼器谱。</p>`;
+  }
+
+  const realmNames = { 0: "凡人阶", 1: "炼气阶", 2: "筑基阶", 3: "金丹阶" };
+  html += `<div class="parchment-list-wrap">`;
+  allowedRecipes.forEach(recipe => {
+    const known = typeof isForgeRecipeKnown === "function" ? isForgeRecipeKnown(recipe.id) : false;
+    const price = typeof getForgeRecipeExchangePrice === "function" ? getForgeRecipeExchangePrice(recipe) : (recipe.price || 50);
+    const rm = typeof getForgeRecipeRealm === "function" ? getForgeRecipeRealm(recipe) : (recipe.realm || 0);
+    const tierNum = recipe.tier || (rm <= 1 ? 1 : rm);
+    const slotLabel = EQUIP_SLOT_LABELS[recipe.slot] || SLOT_NAMES[recipe.slot] || recipe.slot;
+    const tierCls = recipe.grade >= 6 ? "tier-gold" : recipe.grade >= 4 ? "tier-purple" : recipe.grade >= 2 ? "tier-blue" : "tier-green";
+    const canBuy = !known && S.contrib >= price;
+
+    html += `
+      <div class="parchment-item-row" onclick="openForgeRecipeShopDetailModal('${recipe.id}')">
+        <div class="p-row-left">
+          <div class="p-row-icon">⚒️</div>
+          <span class="p-row-name ${tierCls}">《${recipe.name}》器谱</span>
+          <span class="p-row-badge">${realmNames[rm] || '凡人阶'}·${tierNum}阶${recipe.grade}品·${slotLabel}</span>
+        </div>
+        <div class="fs-card-right-group">
+          <span class="fs-card-cost">🎖️ ${price}</span>
+          <button type="button" class="fs-card-buy-btn" onclick="event.stopPropagation(); buyForgeRecipe('${recipe.id}', ${price})" ${canBuy ? "" : "disabled"}>
+            ${known ? "已掌握" : "兑换"}
+          </button>
+        </div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function openForgeRecipeShopDetailModal(recipeId) {
+  const recipe = typeof getForgeRecipe === "function" ? getForgeRecipe(recipeId) : null;
+  if (!recipe) return;
+  const known = typeof isForgeRecipeKnown === "function" ? isForgeRecipeKnown(recipeId) : false;
+  const price = typeof getForgeRecipeExchangePrice === "function" ? getForgeRecipeExchangePrice(recipe) : (recipe.price || 50);
+  const allowed = typeof isForgeRecipeExchangeableInSect === "function" ? isForgeRecipeExchangeableInSect(recipe) : ((recipe.realm || 0) <= 3 && (recipe.grade || 1) <= 6);
+  const canBuy = allowed && !known && S.contrib >= price;
+  const rm = typeof getForgeRecipeRealm === "function" ? getForgeRecipeRealm(recipe) : (recipe.realm || 0);
+  const realmNames = { 0: "凡人境", 1: "炼气期", 2: "筑基期", 3: "金丹期", 4: "元婴期" };
+  const tierNum = recipe.tier || (rm <= 1 ? 1 : rm);
+  const slotLabel = EQUIP_SLOT_LABELS[recipe.slot] || SLOT_NAMES[recipe.slot] || recipe.slot;
+  const matText = Object.entries(recipe.mats || {})
+    .map(([base, cnt]) => `${base}_${recipe.grade}品 ×${cnt}`).join(" + ");
+
+  showModal(`⚒️ 炼器图谱 · 《${recipe.name}》`, `
+    <div class="card">
+      <div class="row"><span>适用境界</span><b>${realmNames[rm] || "凡人境"}（金丹及以下可兑）</b></div>
+      <div class="row"><span>成器品阶</span><b>${tierNum} 阶 · ${recipe.grade} 品（${slotLabel}）</b></div>
+      <div class="row"><span>锻造耗材</span><b>${matText} + 灵石×${recipe.spiritStone || 0}</b></div>
+      <div class="row"><span>基础成器率</span><b>${((recipe.rate || 0.5) * 100).toFixed(0)}%</b></div>
+      <div class="row"><span>兑换所需</span><b>${price} 宗门贡献（当前 ${S.contrib}）</b></div>
+    </div>
+    <p>${recipe.desc || "宗门秘传百炼器谱，参悟后可在【洞府 > 炼器房】开炉锻造。"}</p>
+  `, [
+    ...(canBuy ? [{
+      label: `立即兑换器谱 (${price}贡献)`,
+      primary: true,
+      fn: () => { closeModal(); buyForgeRecipe(recipeId, price); }
+    }] : []),
+    { label: "合上玉简", fn: closeModal }
+  ]);
+}
+
+function buyForgeRecipe(recipeId, price) {
+  const res = typeof unlockForgeRecipe === "function" ? unlockForgeRecipe(recipeId, price) : { ok: false, reason: "系统未就绪" };
+  if (!res.ok) {
+    log(`兑换失败：${res.reason}`, "c-bad");
+    return;
+  }
+  save();
+  render();
+  showActionModal("习得炼器谱", [
+    `获得炼器谱：《${res.recipe.name}》（${res.recipe.grade}品）`,
+    `消耗：${res.cost} 宗门贡献`,
+    `可前往【洞府 > 炼器房】开炉锻造`,
+  ]);
 }
 
 function openRecipeShopDetailModal(recipeId) {
@@ -776,7 +983,7 @@ function buyRecipe(recipeId, price) {
 }
 
 /* ============================================================
-   【历练】主视图 (水墨江山卷轴 + 九大险地圆形书法印章节点 + 天机秘境圆章)
+   【历练】主视图 (水墨江山卷轴 + 五大险地圆形书法印章节点 + 天机秘境圆章)
    ============================================================ */
 
 function renderAdventureMapPage() {
@@ -794,15 +1001,18 @@ function renderAdventureMapPage() {
     : [];
   const secretCount = (pending ? 1 : 0) + unlockedB.length;
 
-  /* 提取每个历练地域的核心水墨篆印字（如“迷雾森林”->“林”，“幽冥涧”->“涧”） */
-  const sealChars = ["林", "涧", "谷", "窟", "山", "原", "泽", "渊", "墟"];
+  /* 对应五大险地：云雾山麓(云)、寒潭幽谷(寒)、丹霞秘境(丹)、沉星古陵(陵)、天渊道窟(渊) */
+  const sealChars = ["云", "寒", "丹", "陵", "渊"];
 
-  const sealNodesHtml = ADVENTURE_ZONES.map((zone, idx) => {
+  let sealNodesHtml = ADVENTURE_ZONES.map((zone, idx) => {
     const recPower = typeof calcZoneRecommendedPower === "function" ? calcZoneRecommendedPower(zone) : 0;
     const isUnderRealm = realm < zone.realmMin;
     const isWeak = pPower < recPower || isUnderRealm;
+    const isCleared = Boolean(S.flags && S.flags.dungeonsCleared && S.flags.dungeonsCleared[zone.id]);
     const minRealmName = REALMS[zone.realmMin] ? REALMS[zone.realmMin].name : "凡人";
-    const sealChar = sealChars[idx] || zone.name.slice(-1);
+    const sealChar = sealChars[idx] || zone.name.charAt(0);
+    const stampText = isCleared ? "已通" : (isWeak ? "凶险" : "适宜");
+    const stampCls = isCleared ? "good" : (isWeak ? "bad" : "good");
 
     return `
       <button type="button"
@@ -812,7 +1022,7 @@ function renderAdventureMapPage() {
         <div class="adv-seal-disc">
           <span class="adv-seal-idx">${idx + 1}</span>
           <span class="adv-seal-char">${sealChar}</span>
-          <span class="adv-seal-stamp ${isWeak ? 'bad' : 'good'}">${isWeak ? '凶险' : '适宜'}</span>
+          <span class="adv-seal-stamp ${stampCls}">${stampText}</span>
         </div>
         <div class="adv-seal-caption">${zone.name}</div>
         <div class="adv-seal-meta">${minRealmName} · ☯${fmt(recPower)}</div>
@@ -820,28 +1030,47 @@ function renderAdventureMapPage() {
     `;
   }).join("");
 
+  /* 第 6 枚圆章：天机秘境入口（补齐 3列×2行 山河卷轴） */
+  sealNodesHtml += `
+    <button type="button"
+            class="adv-seal-node ${secretCount > 0 ? 'safe' : ''}"
+            onclick="openSecretRealmListModal()"
+            title="探索天机秘境与古修遗迹">
+      <div class="adv-seal-disc">
+        <span class="adv-seal-idx">✦</span>
+        <span class="adv-seal-char">秘</span>
+        <span class="adv-seal-stamp ${secretCount > 0 ? 'good' : 'bad'}">${secretCount > 0 ? `机缘×${secretCount}` : '寻访'}</span>
+      </div>
+      <div class="adv-seal-caption">天机秘境</div>
+      <div class="adv-seal-meta">${pending ? '限时裂隙开启' : '寻访天机 · 古修秘藏'}</div>
+    </button>
+  `;
+
   return `
     <div class="ink-panorama-viewport">
       <div class="ink-scroll-roller top"></div>
 
-      <!-- 顶部常驻历练战力铭牌与【秘境】圆章入口 -->
+      <!-- 顶部常驻历练战力铭牌与【秘境/服丹】圆章入口 -->
       <div class="ink-panorama-hud">
         <div class="ink-scene-plaque">
           <div class="plaque-main">
             <span class="cinnabar-tag">历练</span>
             九州万里山河卷
           </div>
-          <div class="plaque-sub">战力 <b>☯ ${fmt(pPower)}</b> · 行动 <b>${remainActions}/${ACTIONS_PER_SLOT}</b> · 左右滑动探索险境</div>
+          <div class="plaque-sub">战力 <b>☯ ${fmt(pPower)}</b> · 气血 <b>${S.hp}/${typeof totalMaxHp === "function" ? totalMaxHp() : (S.hpMax || 100)}</b> · 行动 <b>${remainActions}/${ACTIONS_PER_SLOT}</b></div>
         </div>
 
         <div class="ink-top-right-seals">
+          <button type="button" class="ink-mini-seal" onclick="if(typeof openAdvQuickHealModal==='function') openAdvQuickHealModal();" title="服用丹药恢复状态">
+            <span>调息</span>
+          </button>
           <button type="button" class="ink-mini-seal ${secretCount > 0 ? 'glow' : ''}" onclick="openSecretRealmListModal()" title="天机秘境探索">
             <span>秘境${secretCount > 0 ? `(${secretCount})` : ''}</span>
           </button>
         </div>
       </div>
 
-      <!-- 可左右滑动/拖拽的九州山河万里长卷 (从左至右蜿蜒深入九大险境) -->
+      <!-- 可左右滑动/拖拽的九州山河万里长卷 -->
       <div class="ink-panorama-scroll scrollable-landscape" data-init-align="left">
         <div class="ink-scene-canvas adv-map-panorama ink-panorama-world adv-wide-world">
           <img class="ink-scene-bg" src="./src/assets/images/xianxia_bg_banner_1792114543496.jpg" alt="九州水墨历练卷轴" referrerPolicy="no-referrer">
@@ -850,14 +1079,14 @@ function renderAdventureMapPage() {
 
           <!-- 水墨蜿蜒古道连线 SVG -->
           <svg class="adv-trail-svg" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M 90,115 Q 150,240 210,255 T 330,110 T 450,255 T 570,110 T 690,255 T 810,110 T 915,245"
+            <path d="M 140,105 Q 240,245 320,255 T 500,105 T 680,255 T 850,115"
                   fill="none"
-                  stroke="rgba(226, 192, 118, 0.36)"
+                  stroke="rgba(226, 192, 118, 0.38)"
                   stroke-width="3"
                   stroke-dasharray="8 8" />
           </svg>
 
-          <!-- 九大历练险地圆形书法印章长卷排布 (5列×2行蜿蜒错落，宽敞不拥挤) -->
+          <!-- 五大历练险地 + 天机秘境圆形书法印章排布 (3列×2行蜿蜒错落) -->
           <div class="adv-pillars-stage adv-seal-grid">
             ${sealNodesHtml}
           </div>
@@ -866,9 +1095,9 @@ function renderAdventureMapPage() {
 
       <!-- 底部九州地域导览罗盘 -->
       <div class="ink-panorama-compass">
-        <button type="button" class="pano-compass-btn active" data-pos="left" onclick="panPanorama('left')">◀ 近郊·林涧谷</button>
-        <button type="button" class="pano-compass-btn" data-pos="center" onclick="panPanorama('center')">⛰️ 中州·窟山原</button>
-        <button type="button" class="pano-compass-btn" data-pos="right" onclick="panPanorama('right')">绝域·泽渊墟 ▶</button>
+        <button type="button" class="pano-compass-btn active" data-pos="left" onclick="panPanorama('left')">◀ 初途·云雾寒潭</button>
+        <button type="button" class="pano-compass-btn" data-pos="center" onclick="panPanorama('center')">🔥 中途·丹霞古陵</button>
+        <button type="button" class="pano-compass-btn" data-pos="right" onclick="panPanorama('right')">天渊·天机秘境 ▶</button>
       </div>
 
       <div class="ink-scroll-roller bottom"></div>
@@ -885,26 +1114,42 @@ function openAdventureZoneModal(zoneId) {
   const pPower = typeof calcPlayerCombatPower === "function" ? calcPlayerCombatPower() : 0;
   const recPower = typeof calcZoneRecommendedPower === "function" ? calcZoneRecommendedPower(zone) : 0;
   const isWeak = pPower < recPower || info.realm < zone.realmMin;
+  const isCleared = Boolean(S.flags && S.flags.dungeonsCleared && S.flags.dungeonsCleared[zone.id]);
   const realmText = `${REALMS[zone.realmMin].name} ~ ${REALMS[zone.realmMax].name}`;
-  const remain = Math.max(0, ACTIONS_PER_SLOT - (S.actionsUsed || 0));
+
+  /* 汇总各层标题与可掉落物预览 */
+  const layerNames = (zone.layers || []).map(l => `第${l.layer}层「${l.title}」`).join(" → ");
+  const dropItemIds = new Set();
+  (zone.layers || []).forEach(l => {
+    (l.storageRewards || []).forEach(sr => {
+      if (sr.itemId) dropItemIds.add(sr.itemId);
+    });
+  });
+  const dropNames = Array.from(dropItemIds).map(id => {
+    const def = (typeof ITEMS !== "undefined" && ITEMS[id]) ? ITEMS[id] : null;
+    return def ? `${def.icon || ""} ${def.name}` : id;
+  }).slice(0, 6).join("、");
 
   showModal(`${zone.icon || '⛰️'} 历练险地 · ${zone.name}`, `
     <div class="card">
+      <div class="row"><span>通关状态</span><b style="color:${isCleared ? '#98c379' : '#ffd875'};">${isCleared ? '✅ 已通关（可重复历练）' : '🌟 首通待破（首通享双倍通关奖励）'}</b></div>
       <div class="row"><span>适宜境界</span><b>${realmText}</b></div>
       <div class="row"><span>险地层数</span><b>共 ${zone.layers.length} 层（耗费 ${zone.actionCost} 行动）</b></div>
       <div class="row"><span>推荐战力</span><b style="color:#d8b878;">☯ ${fmt(recPower)}</b></div>
-      <div class="row"><span>你的战力</span><b style="color:${isWeak ? '#e06c75' : '#98c379'};">☯ ${fmt(pPower)} ${isWeak ? '（⚠️ 凶险）' : '（适宜）'}</b></div>
-      <div class="row"><span>本时段剩余行动</span><b>${remain} / ${ACTIONS_PER_SLOT}</b></div>
     </div>
-    <p>${zone.desc}</p>
-    <p class="small">💡 只有【练气1重】妖兽可被收服为灵宠，更高阶妖兽桀骜难驯必定失败。</p>
+    <p class="small" style="margin:6px 0 4px; color:var(--text-main);">${zone.desc}</p>
+    <div class="small" style="color:var(--text-dim); line-height:1.5;">
+      <div>🗺️ 路线：${layerNames}</div>
+      ${dropNames ? `<div>🎁 机缘产出：灵石、修为、${dropNames} 等</div>` : ""}
+      <div>💡 提示：练气1重妖兽可尝试【驯】收服为灵宠。</div>
+    </div>
   `, [
     {
       label: isWeak ? "⚠️ 涉险前往历练" : "⚔️ 立即进入历练",
       primary: true,
       fn: () => {
         closeModal();
-        enterAdventure(zone.id);
+        enterAdventure(zone.id, true);
       }
     },
     { label: "暂缓前往", fn: closeModal }
@@ -912,9 +1157,20 @@ function openAdventureZoneModal(zoneId) {
 }
 
 function openSecretRealmListModal() {
-  showModal("📜 天机秘境录", renderSecretRealmList(), [
-    { label: "合上玉简", fn: closeModal }
-  ]);
+  const pending = S.flags && S.flags.pendingSecretRealm;
+  const btns = [];
+  if (!pending && typeof seekSecretRealm === "function") {
+    btns.push({
+      label: "🧭 寻访天机 (1行动·50灵石)",
+      primary: true,
+      fn: () => {
+        closeModal();
+        seekSecretRealm();
+      }
+    });
+  }
+  btns.push({ label: "合上玉简", fn: closeModal });
+  showModal("📜 天机秘境录", renderSecretRealmList(), btns);
 }
 
 function renderAdventureZoneList() {
@@ -927,70 +1183,150 @@ function renderAdventureZoneList() {
 
 function renderSecretRealmList() {
   const pPower = typeof calcPlayerCombatPower === "function" ? calcPlayerCombatPower() : 0;
-  let html = `<p class="small">秘境为机缘奇遇，每次探索消耗 2 行动。当前战力：<b style="color:#d8b878;">☯ ${fmt(pPower)}</b></p>`;
+  const remain = Math.max(0, ACTIONS_PER_SLOT - (S.actionsUsed || 0));
+  let html = `
+    <div class="small" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; color:var(--text-dim);">
+      <span>每次秘境探索耗 <b>2</b> 行动（剩余 <b>${remain}/${ACTIONS_PER_SLOT}</b>）</span>
+      <span>战力 <b style="color:#d8b878;">☯ ${fmt(pPower)}</b></span>
+    </div>
+  `;
 
   const pending = S.flags.pendingSecretRealm;
-  let hasAny = false;
   html += `<div class="parchment-list-wrap">`;
 
+  /* 1. 限时天机秘境（A组） */
   if (pending) {
     const ev = getSecretEventById(pending.id);
     if (ev) {
-      hasAny = true;
       const recPower = typeof calcSecretRealmRecommendedPower === "function" ? calcSecretRealmRecommendedPower(ev) : 0;
       const isWeak = pPower < recPower || (ev.realmMin !== undefined && S.realm < ev.realmMin);
+      const leftDays = Math.max(1, pending.expireDay - S.day);
       html += `
         <div class="parchment-item-row" onclick="closeModal(); enterSecretRealmById('${ev.id}', {fromPending:true})">
           <div class="p-row-left">
-            <div class="p-row-icon">🌀</div>
-            <span class="p-row-name tier-gold">${ev.name}</span>
-            <span class="p-row-badge">${isWeak ? '⚠️凶险' : '适宜'}·剩${pending.expireDay - S.day}天</span>
+            <div class="p-row-icon">${ev.icon || "🌀"}</div>
+            <div>
+              <div>
+                <span class="p-row-name tier-gold">${ev.name}</span>
+                <span class="p-row-badge">${isWeak ? '⚠️凶险' : '适宜'} · 剩${leftDays}天</span>
+              </div>
+              <div class="small" style="color:var(--text-dim); font-size:11px;">限时天机裂隙 · 荐战力 ☯${fmt(recPower)}</div>
+            </div>
           </div>
-          <span class="p-row-count">荐战力 ${recPower} ▸</span>
+          <span class="p-row-count" style="color:var(--text-gold);">探索 ▸</span>
         </div>
       `;
     }
-  }
-
-  const unlockedB = (SECRET_EVENTS.B || []).filter(e => isSecretEventUnlocked(e.id));
-  unlockedB.forEach(ev => {
-    hasAny = true;
-    const recPower = typeof calcSecretRealmRecommendedPower === "function" ? calcSecretRealmRecommendedPower(ev) : 0;
-    const isWeak = pPower < recPower || (ev.realmMin !== undefined && S.realm < ev.realmMin);
+  } else {
     html += `
-      <div class="parchment-item-row" onclick="closeModal(); enterSecretRealmById('${ev.id}')">
+      <div class="parchment-item-row" onclick="closeModal(); if(typeof seekSecretRealm==='function') seekSecretRealm();">
         <div class="p-row-left">
-          <div class="p-row-icon">⛩️</div>
-          <span class="p-row-name tier-purple">${ev.name}</span>
-          <span class="p-row-badge">${isWeak ? '⚠️凶险' : '适宜'}</span>
+          <div class="p-row-icon">🧭</div>
+          <div>
+            <div>
+              <span class="p-row-name tier-gold">寻访天机 · 推演秘境裂隙</span>
+              <span class="p-row-badge">耗1行动 · 50灵石</span>
+            </div>
+            <div class="small" style="color:var(--text-dim); font-size:11px;">除每月初五自然显化外，可主动布设寻灵盘推演附近秘境</div>
+          </div>
         </div>
-        <span class="p-row-count">荐战力 ${recPower} ▸</span>
+        <span class="p-row-count" style="color:var(--text-gold);">推演 ▸</span>
       </div>
     `;
+  }
+
+  /* 2. 古修遗迹与常驻秘境（B组：展示已解锁与未解锁条件） */
+  const allB = (typeof SECRET_EVENTS !== "undefined" && SECRET_EVENTS.B) ? SECRET_EVENTS.B : [];
+  allB.forEach(ev => {
+    const unlocked = isSecretEventUnlocked(ev.id);
+    const isCleared = Boolean(S.flags && S.flags.secretCleared && S.flags.secretCleared[ev.id]);
+    const recPower = typeof calcSecretRealmRecommendedPower === "function" ? calcSecretRealmRecommendedPower(ev) : 0;
+    const isWeak = pPower < recPower || (ev.realmMin !== undefined && S.realm < ev.realmMin);
+
+    if (unlocked) {
+      html += `
+        <div class="parchment-item-row" onclick="closeModal(); enterSecretRealmById('${ev.id}')">
+          <div class="p-row-left">
+            <div class="p-row-icon">${ev.icon || "⛩️"}</div>
+            <div>
+              <div>
+                <span class="p-row-name tier-purple">${ev.name}</span>
+                <span class="p-row-badge">${isCleared ? '✅已探' : (isWeak ? '⚠️凶险' : '适宜')}</span>
+              </div>
+              <div class="small" style="color:var(--text-dim); font-size:11px;">${ev.desc || "古修秘境"} · 荐战力 ☯${fmt(recPower)}</div>
+            </div>
+          </div>
+          <span class="p-row-count">进入 ▸</span>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="parchment-item-row" style="opacity:0.62; cursor:default;">
+          <div class="p-row-left">
+            <div class="p-row-icon">🔒</div>
+            <div>
+              <div>
+                <span class="p-row-name">${ev.name}</span>
+                <span class="p-row-badge">未解锁</span>
+              </div>
+              <div class="small" style="color:var(--text-dim); font-size:11px;">解锁条件：${ev.unlockHint || "满足特定境界或机缘"}</div>
+            </div>
+          </div>
+          <span class="p-row-count" style="color:var(--text-dim);">荐 ☯${fmt(recPower)}</span>
+        </div>
+      `;
+    }
   });
 
   html += `</div>`;
-  if (!hasAny) {
-    html += `<p class="empty">天地茫茫，近期尚无秘境开启之兆（每月初五或奇遇可触发秘境）。</p>`;
-  }
-
   return html;
 }
 
 /* ============================================================
-   装备铺 (极简名字行 + 点击弹窗兑换)
+   装备铺 / 炼器铺 (仅限兑换 1 品武器/法器 + 兑换金丹及以下炼器谱)
    ============================================================ */
 
+let currentEquipShopSubMode = "equip"; // "equip" | "forgeRecipe"
+
+function switchEquipShopSubMode(mode) {
+  currentEquipShopSubMode = mode;
+  render();
+}
+
+const EQUIP_SLOT_LABELS = {
+  rightHand: "兵器",
+  leftHand:  "左手",
+  head:      "头部",
+  body:      "衣服",
+  shoes:     "鞋子",
+  accessory: "玉佩",
+  artifact:  "法宝",
+};
+
 function renderSectEquipShop(sect) {
-  const playerInfo = getPlayerRealmInfo();
-  const playerRealm = playerInfo.realm;
+  let html = `
+    <div class="om-bag-tabs" style="margin-bottom:8px;">
+      <button type="button" class="om-bag-tab ${currentEquipShopSubMode === 'equip' ? 'active' : ''}" onclick="switchEquipShopSubMode('equip')">⚔️ 一品武器/法器</button>
+      <button type="button" class="om-bag-tab ${currentEquipShopSubMode === 'forgeRecipe' ? 'active' : ''}" onclick="switchEquipShopSubMode('forgeRecipe')">⚒️ 炼器谱兑换</button>
+    </div>
+  `;
+
+  if (currentEquipShopSubMode === "forgeRecipe") {
+    return html + renderSectForgeRecipeExchangeList();
+  }
+
+  html += `<p class="small">宗门武库仅提供<b>【1品（1阶·1品）】</b>制式武器与护身法器兑换（当前贡献：<b>${S.contrib}</b>）。2品及以上神兵请切换至【⚒️ 炼器谱兑换】习得图谱后于洞府锻造。</p>`;
 
   const allItems = getShopItems(SECT_EQUIP_SHOP, S.sect);
-  const available = filterShopByRealm(allItems, playerRealm);
+  /* 严格过滤：宗门只能兑换 1 品武器/装备 */
+  const available = allItems.filter(item => {
+    const eq = ITEMS[item.itemId];
+    return eq && (eq.grade || 1) === 1;
+  });
 
-  let html = `<div class="parchment-sec-header">装备</div>`;
+  html += `<div class="parchment-sec-header">宗门一品武库（1阶·1品）</div>`;
   if (available.length === 0) {
-    return html + `<p class="empty">当前境界暂无可兑换的装备。</p>`;
+    return html + `<p class="empty">暂无可兑换的一品武器与法器。</p>`;
   }
 
   html += `<div class="parchment-list-wrap">`;
@@ -999,18 +1335,22 @@ function renderSectEquipShop(sect) {
     if (!eq) return;
     const owned = hasItem(item.itemId);
     const canBuy = !owned && S.contrib >= item.price;
+    const slotLabel = EQUIP_SLOT_LABELS[eq.slot] || SLOT_NAMES[eq.slot] || eq.slot;
+    const tierNum = eq.tier || 1;
+    const gradeNum = eq.grade || 1;
+    const tierCls = typeof getItemTierColorClass === "function" ? getItemTierColorClass(eq) : "tier-green";
 
     html += `
       <div class="parchment-item-row" onclick="openSectEquipModal('${item.itemId}', ${item.price})">
         <div class="p-row-left">
-          <div class="p-row-icon">⚔️<span class="p-icon-qty">1</span></div>
-          <span class="p-row-name tier-blue">${eq.name}</span>
-          <span class="p-row-badge">${SLOT_NAMES[eq.slot] || eq.slot}</span>
+          <div class="p-row-icon">${typeof getItemIcon === "function" ? getItemIcon(eq, item.itemId) : (eq.slot === 'body' ? '🥋' : '⚔️')}<span class="p-icon-qty">1</span></div>
+          <span class="p-row-name ${tierCls}">${eq.name}</span>
+          <span class="p-row-badge">${tierNum}阶·${gradeNum}品·${slotLabel}</span>
         </div>
         <div class="fs-card-right-group">
           <span class="fs-card-cost">🎖️ ${item.price}</span>
           <button type="button" class="fs-card-buy-btn" onclick="event.stopPropagation(); buyShopEquip('${item.itemId}', ${item.price})" ${canBuy ? "" : "disabled"}>
-            ${owned ? "已兑" : "购买"}
+            ${owned ? "已兑" : "兑换"}
           </button>
         </div>
       </div>
@@ -1021,19 +1361,24 @@ function renderSectEquipShop(sect) {
 }
 
 function openSectEquipModal(itemId, price) {
-  const eq = ITEMS[itemId];
+  const eq = (typeof getItem === "function" ? getItem(itemId) : null) || ITEMS[itemId];
   if (!eq) return;
   const owned = hasItem(itemId);
-  const canBuy = !owned && S.contrib >= price;
+  const gradeNum = eq.grade || 1;
+  const tierNum = eq.tier || 1;
+  const canBuy = !owned && gradeNum === 1 && S.contrib >= price;
   const extra = eq.spellBonus ? ` / 法术威力 +${(eq.spellBonus * 100).toFixed(0)}%` : "";
+  const equipIcon = typeof getItemIcon === "function" ? getItemIcon(eq, itemId) : (eq.slot === 'body' ? '🥋' : '⚔️');
+  const slotLabel = EQUIP_SLOT_LABELS[eq.slot] || SLOT_NAMES[eq.slot] || eq.slot;
 
-  showModal(`⚔️ 神兵鉴赏 · ${eq.name}`, `
+  showModal(`${equipIcon} 宗门法器 · ${eq.name}`, `
     <div class="card">
-      <div class="row"><span>佩戴部位</span><b>${SLOT_NAMES[eq.slot] || eq.slot}</b></div>
+      <div class="row"><span>佩戴部位</span><b>${slotLabel}</b></div>
+      <div class="row"><span>品阶品质</span><b>${tierNum} 阶 · ${gradeNum} 品</b></div>
       <div class="row"><span>法器属性</span><b>攻+${eq.atk || 0} 防+${eq.def || 0} 血+${eq.hp || 0} 灵+${eq.mp || 0}${extra}</b></div>
       <div class="row"><span>兑换价格</span><b>${price} 宗门贡献（当前 ${S.contrib}）</b></div>
     </div>
-    <p>${eq.desc || "宗门炼器堂精铸护身法器。"}</p>
+    <p>${eq.desc || "宗门炼器堂精铸的一品护身法器。"}</p>
   `, [
     ...(canBuy ? [{
       label: `立即兑换 (${price}贡献)`,
@@ -1071,7 +1416,7 @@ function renderMarket() {
 
   const renderGoodRow = ({ g, item }) => {
     const canBuy = S.money >= g.price;
-    const icon = (typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "🏺";
+    const icon = (typeof getItemIcon === "function") ? getItemIcon(item, g.itemId) : ((typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "🏺");
     const tierCls = typeof getItemTierColorClass === "function" ? getItemTierColorClass(item) : "tier-green";
     return `
       <div class="parchment-item-row" onclick="openMarketGoodModal('${g.itemId}', ${g.price})">
@@ -1111,11 +1456,11 @@ function renderMarket() {
   html += `<div class="parchment-sec-header">天机特拍</div>`;
   html += `<div class="parchment-list-wrap">`;
   S.flags.auction.stock.forEach((g, i) => {
-    const item = ITEMS[g.itemId];
+    const item = (typeof getItem === "function" ? getItem(g.itemId) : null) || ITEMS[g.itemId];
     if (!item) return;
     const bought = S.flags.auction.bought[i];
     const canBuy = !bought && S.stone >= g.price;
-    const icon = (typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "💎";
+    const icon = (typeof getItemIcon === "function") ? getItemIcon(item, g.itemId) : ((typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "💎");
     html += `
       <div class="parchment-item-row" onclick="openAuctionItemModal(${i})">
         <div class="p-row-left">

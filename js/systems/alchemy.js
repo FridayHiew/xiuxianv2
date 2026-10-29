@@ -41,8 +41,23 @@ function unlockRecipe(recipeId, cost) {
 }
 
 /* ============================================================
-   产出公式
+   产出与成丹率公式（含炼丹造诣平滑加成）
    ============================================================ */
+
+function getAlchemySkillBonusOutput(lvl) {
+  const lv = lvl !== undefined ? lvl : getAlchemySkillLv();
+  if (lv >= 10) return 3.0;
+  if (lv >= 9) return 2.0;
+  if (lv >= 6) return 1.5;
+  if (lv >= 3) return 1.0;
+  if (lv >= 1) return 0.5;
+  return 0;
+}
+
+function getAlchemySkillBonusRate(lvl) {
+  const lv = lvl !== undefined ? lvl : getAlchemySkillLv();
+  return +(lv * 0.015).toFixed(3);
+}
 
 function calcAlchemyOutput() {
   const caveLv = getAlchemyCaveLv();
@@ -50,10 +65,7 @@ function calcAlchemyOutput() {
 
   if (caveLv >= 1) bonus += (caveLv - 1) * 0.5;
 
-  const lv = getAlchemySkillLv();
-  if (lv >= 9) bonus += 2;
-  else if (lv >= 6) bonus += 1;
-  else if (lv >= 3) bonus += 0.5;
+  bonus += getAlchemySkillBonusOutput();
 
   if (S.flags.alchemyBuff && S.flags.alchemyBuff.output > 0) {
     bonus += S.flags.alchemyBuff.output;
@@ -61,7 +73,7 @@ function calcAlchemyOutput() {
 
   if (S.mood >= 1) bonus += 0.5;
 
-  return Math.max(1, Math.min(10, Math.floor(1 + bonus)));
+  return Math.max(1, Math.min(12, Math.floor(1 + bonus)));
 }
 
 /* 炼丹成功率（不含品级惩罚，品级由 roll 决定） */
@@ -70,7 +82,7 @@ function calcAlchemyRate(recipeId) {
   if (!recipe) return 0;
 
   let rate = recipe.rate || 0.5;
-  rate += getAlchemySkillLv() * 0.01;
+  rate += getAlchemySkillBonusRate();
 
   if (S.flags.alchemyBuff && S.flags.alchemyBuff.rate > 0) {
     rate += S.flags.alchemyBuff.rate;
@@ -83,22 +95,17 @@ function calcAlchemyRate(recipeId) {
 }
 
 /* ============================================================
-   品级分布
-   ------------------------------------------------------------
-   成功时（roll 到成功）：
-   - 1 品：50%
-   - 2 品：30%
-   - 3 品：15%
-   - 4 品：4%
-   - 5 品：1%
+   品级分布（受炼丹造诣加成：造诣越高，3~5品高阶灵丹出丹率越高）
    ============================================================ */
 
 function rollPillGrade() {
-  const r = Math.random();
+  const lv = getAlchemySkillLv();
+  const boost = lv * 0.015; /* Lv.10 最高提供 +15% 高品偏移 */
+  const r = Math.random() + boost;
   if (r < 0.50) return 1;
   if (r < 0.80) return 2;
-  if (r < 0.95) return 3;
-  if (r < 0.99) return 4;
+  if (r < 0.94) return 3;
+  if (r < 0.985) return 4;
   return 5;
 }
 
@@ -220,29 +227,38 @@ function executeAlchemy(recipeId, count) {
     if (gradeCount[g] <= 0) continue;
     const item = getOrCreatePillItem(templateId, g);
     if (!item) continue;
-    addItem(item.id, gradeCount[g]);
+    const targetItemId = item.id || (templateId + "_" + g + "品");
+    if (!item.id) item.id = targetItemId;
+    ITEMS[targetItemId] = item;
+    addItem(targetItemId, gradeCount[g]);
     itemNames.push(`${item.name} ×${gradeCount[g]}`);
   }
 
   /* 消耗 1 行动 */
   S.actionsUsed++;
 
-  /* 炼丹技能熟练度：成功粒数 × 0.5 */
+  /* 炼丹造诣熟练度：每粒成丹 +(4 + 阶数×2)，每粒废丹亦有 +2 控火感悟 */
   const successCount = count - gradeCount[0];
-  if (successCount > 0) {
-    const inc = successCount * 0.5;
-    if (!S.skills["炼丹"]) S.skills["炼丹"] = { lvl: 0, exp: 0 };
-    S.skills["炼丹"].exp = +(S.skills["炼丹"].exp + inc).toFixed(2);
+  const perSuccessExp = 4 + (recipe.tier || 1) * 2;
+  const rawExp = successCount * perSuccessExp + (gradeCount[0] || 0) * 2;
+  let expGainRes = { added: rawExp, leveledUp: false, newLvl: getAlchemySkillLv(), curExp: 0 };
 
-    while (S.skills["炼丹"].exp >= SKILL_LVL_EXP
-           && S.skills["炼丹"].lvl < MAX_SKILL_LVL) {
-      S.skills["炼丹"].exp = +(S.skills["炼丹"].exp - SKILL_LVL_EXP).toFixed(2);
+  if (typeof gainSkillExp === "function") {
+    expGainRes = gainSkillExp("炼丹", rawExp);
+  } else {
+    if (!S.skills["炼丹"]) S.skills["炼丹"] = { lvl: 0, exp: 0 };
+    S.skills["炼丹"].exp = +(S.skills["炼丹"].exp + rawExp).toFixed(1);
+    while (S.skills["炼丹"].exp >= SKILL_LVL_EXP && S.skills["炼丹"].lvl < MAX_SKILL_LVL) {
+      S.skills["炼丹"].exp = +(S.skills["炼丹"].exp - SKILL_LVL_EXP).toFixed(1);
       S.skills["炼丹"].lvl++;
-      log(`【技能提升】炼丹 提升到 Lv.${S.skills["炼丹"].lvl}！`, "c-gold");
+      expGainRes.leveledUp = true;
+      expGainRes.newLvl = S.skills["炼丹"].lvl;
+      log(`【造诣突破】你的【炼丹造诣】提升到 Lv.${S.skills["炼丹"].lvl}！`, "c-gold");
     }
+    expGainRes.curExp = S.skills["炼丹"].exp;
   }
 
-  log(`炼丹 ${count} 粒：成功 ${successCount} 粒（${itemNames.join("、") || "无"}）${gradeCount[0] > 0 ? "，失败 " + gradeCount[0] + " 粒" : ""}`, successCount > 0 ? "c-gold" : "c-bad");
+  log(`炼丹 ${count} 粒：成功 ${successCount} 粒（${itemNames.join("、") || "无"}）${gradeCount[0] > 0 ? "，失败 " + gradeCount[0] + " 粒" : ""}，炼丹造诣经验 +${expGainRes.added}。`, successCount > 0 ? "c-gold" : "c-bad");
 
   /* 若跨时段 */
   if (S.actionsUsed >= ACTIONS_PER_SLOT && S.hour < 2) {
@@ -265,15 +281,82 @@ function executeAlchemy(recipeId, count) {
     const label = g === 0 ? "废丹" : `${g} 品`;
     lines.push(`${label}：${gradeCount[g]} 粒`);
   }
-  if (successCount > 0) {
-    lines.push(`炼丹熟练度 +${(successCount * 0.5).toFixed(2)}`);
-  }
+  lines.push(`炼丹造诣经验 +${expGainRes.added}${expGainRes.leveledUp ? `（突破至 Lv.${expGainRes.newLvl}！）` : `（${expGainRes.curExp}/100）`}`);
   lines.push(`消耗 1 行动`);
 
-  /* 播放平滑流光炼丹动画 */
+  /* 播放平滑流光炼丹动画与水墨氤氲成功特效 */
   triggerAlchemyAnimationModal(recipe.name, count, () => {
-    showActionModal("炼丹结束", lines);
+    if (successCount > 0) {
+      showAlchemySuccessModal(recipe, count, successCount, gradeCount, rate, itemNames, expGainRes);
+    } else {
+      showActionModal("炼丹结束 · 控火感悟", lines);
+    }
   });
+}
+
+/* ============================================================
+   炼丹大吉：水墨氤氲特效结算弹窗 (Ink-Spread Alchemy Results Modal)
+   ============================================================ */
+function showAlchemySuccessModal(recipe, count, successCount, gradeCount, rate, itemNames, expGainRes) {
+  const gradeLabels = ["废丹", "一品", "二品", "三品", "四品", "五品·极品"];
+  const gradeColors = ["#888", "#5fb865", "#3498db", "#9b59b6", "#e67e22", "#f1c40f"];
+
+  let pillPillsHtml = "";
+  for (let g = 5; g >= 1; g--) {
+    if (gradeCount[g] <= 0) continue;
+    const isGold = g >= 4;
+    pillPillsHtml += `
+      <span class="alchemy-pill-chip" style="border-color:${gradeColors[g]}; ${isGold ? 'box-shadow: 0 0 10px rgba(241,196,15,0.45);' : ''}">
+        <span style="font-size:14px;">${isGold ? '✨💊' : '💊'}</span>
+        <b style="color:${gradeColors[g]};">${gradeLabels[g]}</b> ×${gradeCount[g]}
+      </span>
+    `;
+  }
+  if (gradeCount[0] > 0) {
+    pillPillsHtml += `
+      <span class="alchemy-pill-chip" style="opacity:0.65; border-color:#555;">
+        <span>💨</span>
+        <span style="color:#888;">废丹</span> ×${gradeCount[0]}
+      </span>
+    `;
+  }
+
+  const addedExp = expGainRes ? expGainRes.added : (successCount * 6);
+  const lvlUpText = (expGainRes && expGainRes.leveledUp) ? ` · 🎉 突破至 Lv.${expGainRes.newLvl}！` : "";
+
+  const html = `
+    <div class="alchemy-success-wrapper">
+      <div class="alchemy-ink-spread"></div>
+      <div class="alchemy-ink-spread-ring"></div>
+      
+      <div class="alchemy-success-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px dashed #3a2b18; padding-bottom:6px;">
+          <div style="font-size:15px; font-weight:700; color:var(--text-gold); font-family:var(--font-serif); display:flex; align-items:center; gap:6px;">
+            <span>🌟</span>
+            <span>丹成九转 · 异香满室</span>
+          </div>
+          <span class="tag gold" style="font-size:11px;">丹方契合 ${(rate * 100).toFixed(0)}%</span>
+        </div>
+
+        <div style="font-size:12.5px; color:#c4b494; margin-bottom:10px; line-height:1.5;">
+          鼎盖揭启，紫气东来，水墨氤氲漫散！共计投入 <b>${count}</b> 份灵材，凝炼出灵丹 <b>${successCount}</b> 粒：
+        </div>
+
+        <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:4px;">
+          ${pillPillsHtml}
+        </div>
+
+        <div style="background:rgba(0,0,0,0.3); border:1px solid #3d2f1f; border-radius:6px; padding:6px 10px; font-size:11.5px; color:#d8b878; display:flex; justify-content:space-between; align-items:center;">
+          <span>✨ 炼丹造诣经验 +${addedExp}${lvlUpText}</span>
+          <span>消耗 1 行动</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  showModal("炼丹大吉 · 丹香凝露", html, [
+    { label: "收入储物袋", primary: true, fn: () => { closeModal(); save(); render(); } }
+  ]);
 }
 
 /* ============================================================
@@ -301,21 +384,28 @@ function triggerAlchemyAnimationModal(recipeName, count, onComplete) {
 
   let pct = 0;
   const interval = setInterval(() => {
-    pct += 2;
-    if (pct > 100) pct = 100;
-
     const fillElem = document.getElementById("alchemyProgressFill");
     const percentElem = document.getElementById("alchemyPercentText");
     const statusElem = document.getElementById("alchemyStatusText");
+
+    if (!fillElem && !percentElem && !statusElem) {
+      clearInterval(interval);
+      return;
+    }
+
+    pct += 1;
+    if (pct > 100) pct = 100;
 
     if (fillElem) fillElem.style.width = pct + "%";
     if (percentElem) percentElem.innerText = pct + "%";
 
     if (statusElem) {
-      if (pct < 30) statusElem.innerText = "🔥 灵火引升，鼎炉渐热...";
-      else if (pct < 65) statusElem.innerText = "🌿 药萃融合，凝炼精华...";
-      else if (pct < 95) statusElem.innerText = "✨ 九转火候，丹成在即...";
-      else statusElem.innerText = "🌟 丹炉开封，异香扑鼻！";
+      if (pct < 18) statusElem.innerText = "🔥 灵火引升，紫府鼎炉徐徐加温...";
+      else if (pct < 38) statusElem.innerText = "🌿 投灵草天材，药萃精华渐次消融...";
+      else if (pct < 62) statusElem.innerText = "💨 文武火相济，三昧真火淬除杂质...";
+      else if (pct < 82) statusElem.innerText = "✨ 纳气聚灵，鼎内药力徐徐凝结...";
+      else if (pct < 98) statusElem.innerText = "🔮 九转归一，神芒吞吐丹丸即成...";
+      else statusElem.innerText = "🌟 鼎盖揭启，异香扑鼻，金丹出世！";
     }
 
     if (pct >= 100) {
@@ -323,9 +413,9 @@ function triggerAlchemyAnimationModal(recipeName, count, onComplete) {
       setTimeout(() => {
         closeModal();
         if (onComplete) onComplete();
-      }, 300);
+      }, 400);
     }
-  }, 25);
+  }, 50);
 }
 
 /* ============================================================

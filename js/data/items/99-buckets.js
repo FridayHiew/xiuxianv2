@@ -12,6 +12,8 @@ const ITEMS_BY_TYPE = {};
 function rebuildItemsByType() {
   for (const k in ITEMS_BY_TYPE) delete ITEMS_BY_TYPE[k];
   for (const id in ITEMS) {
+    if (!ITEMS[id]) continue;
+    if (!ITEMS[id].id) ITEMS[id].id = id;
     const t = ITEMS[id].type;
     if (!t) continue;
     if (!ITEMS_BY_TYPE[t]) ITEMS_BY_TYPE[t] = [];
@@ -23,6 +25,7 @@ function rebuildItemsByType() {
 function registerItemToBucket(id) {
   const it = ITEMS[id];
   if (!it || !it.type) return;
+  if (!it.id) it.id = id;
   const bucket = ITEMS_BY_TYPE[it.type];
   if (!bucket) {
     ITEMS_BY_TYPE[it.type] = [id];

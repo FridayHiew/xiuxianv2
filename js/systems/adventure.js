@@ -81,16 +81,24 @@ function enterAdventure(zoneId, forceConfirm) {
   S.flags.adventureLog = null;
   S.flags.adventureCombat = null;
 
-  /* 扣行动 */
+  /* 扣行动并检查时辰推进 */
   S.actionsUsed += zone.actionCost;
+  if (typeof triggerDailyTask === "function") {
+    triggerDailyTask("explore");
+  }
 
-  /* 初始化状态 */
+  /* 初始化状态（含本次历练累计收获） */
   S.flags.adventure = {
     zoneId: zoneId,
     layer: 1,
     path: [],
     currentNodeId: null,
     choices: [],
+    gains: {
+      exp: 0,
+      stone: 0,
+      items: {},
+    },
   };
 
   /* 生成第 1 层 */
@@ -102,33 +110,166 @@ function enterAdventure(zoneId, forceConfirm) {
   openAdventureScreen();
 }
 
-function leaveAdventure() {
-  if (!S.flags.adventure) return;
-  const zone = getAdventureZone(S.flags.adventure.zoneId);
-  const zoneName = zone ? zone.name : "冒险地";
+/* 记录本次历练累计收获 */
+function recordAdventureGain(payload) {
+  if (!S || !S.flags || !S.flags.adventure || !payload) return;
+  if (!S.flags.adventure.gains) {
+    S.flags.adventure.gains = { exp: 0, stone: 0, items: {} };
+  }
+  const g = S.flags.adventure.gains;
+  if (payload.exp && payload.exp > 0) {
+    g.exp = (g.exp || 0) + Math.floor(payload.exp);
+  }
+  if (payload.stone && payload.stone > 0) {
+    g.stone = (g.stone || 0) + Math.floor(payload.stone);
+  }
+  if (payload.itemId && payload.count > 0) {
+    g.items[payload.itemId] = (g.items[payload.itemId] || 0) + payload.count;
+  }
+}
 
-  showModal("离开冒险地", `
-    <p>你离开了【${zoneName}】。</p>
-  `, [
-    { label: "确定", primary: true, fn: () => {
-      S.flags.adventure = null;
-      closeModal();
-      closeAdventureScreen();
-      save();
-      render();
-    }},
+/* 历练途中快捷服丹调息（不消耗时辰行动） */
+function openAdvQuickHealModal(onAfterUse) {
+  const maxHp = typeof totalMaxHp === "function" ? totalMaxHp() : (S.hpMax || 100);
+  const maxMp = typeof totalMaxMp === "function" ? totalMaxMp() : (S.mpMax || 100);
+
+  const healItems = [];
+  for (const id in (S.inventory || {})) {
+    const cnt = S.inventory[id];
+    if (!id || id === "undefined" || cnt <= 0) continue;
+    const it = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id];
+    if (!it) continue;
+    const isHealPill = (it.type === "pill" || it.type === "pillTemplate") &&
+      it.effect && ["heal", "healMp", "fullHeal", "cure"].includes(it.effect.type);
+    const isBandage = id === "d_gao";
+    if (isHealPill || isBandage) {
+      healItems.push({ id, it, cnt });
+    }
+  }
+
+  let listHtml = "";
+  if (healItems.length === 0) {
+    listHtml = `<p class="empty">行囊中暂无疗伤或回灵丹药（可在洞府炼丹房炼制或藏经丹阁兑换）。</p>`;
+  } else {
+    listHtml = `<div class="parchment-list-wrap" style="max-height:46vh; overflow-y:auto;">` + healItems.map(({ id, it, cnt }) => {
+      const icon = typeof getItemIcon === "function" ? getItemIcon(it, id) : "💊";
+      const safeId = String(id).replace(/'/g, "\\'");
+      return `
+        <div class="parchment-item-row" onclick="useAdvQuickHealItem('${safeId}')">
+          <div class="p-row-left">
+            <div class="p-row-icon">${icon}</div>
+            <span class="p-row-name tier-green">${it.name || id}</span>
+            <span class="p-row-badge">${it.desc || '恢复状态'}</span>
+          </div>
+          <div class="fs-card-right-group">
+            <span class="p-row-count">×${cnt}</span>
+            <button type="button" class="fs-card-buy-btn" onclick="event.stopPropagation(); useAdvQuickHealItem('${safeId}')">服用</button>
+          </div>
+        </div>
+      `;
+    }).join("") + `</div>`;
+  }
+
+  window._advAfterQuickHeal = typeof onAfterUse === "function" ? onAfterUse : null;
+
+  showModal("💊 服丹调息 · 状态整备", `
+    <div class="card" style="margin-bottom:8px;">
+      <div class="row"><span>当前气血</span><b style="color:#ff8b8b;">❤️ ${S.hp} / ${maxHp}</b></div>
+      <div class="row"><span>当前灵力</span><b style="color:#67b7f7;">💧 ${S.mp} / ${maxMp}</b></div>
+    </div>
+    ${listHtml}
+  `, [{ label: "完毕", fn: closeModal }], { showCloseX: true });
+}
+
+function useAdvQuickHealItem(itemId) {
+  if (!S.inventory || (S.inventory[itemId] || 0) <= 0) return;
+  const maxHp = typeof totalMaxHp === "function" ? totalMaxHp() : (S.hpMax || 100);
+  const maxMp = typeof totalMaxMp === "function" ? totalMaxMp() : (S.mpMax || 100);
+  const it = (typeof getItem === "function" ? getItem(itemId) : null) || ITEMS[itemId];
+  if (!it) return;
+
+  if (itemId === "d_gao") {
+    if (S.hp >= maxHp) {
+      log("当前气血已满，无需使用药膏。", "c-dim");
+      return;
+    }
+    S.hp = Math.min(maxHp, S.hp + 20);
+    removeItem(itemId, 1);
+    log("敷上药膏，气血 +20。", "c-good");
+  } else if (typeof useItem === "function") {
+    useItem(itemId);
+  } else if (it.effect) {
+    if (it.effect.type === "heal") {
+      S.hp = Math.min(maxHp, S.hp + (it.effect.value || 50));
+      removeItem(itemId, 1);
+    } else if (it.effect.type === "healMp") {
+      S.mp = Math.min(maxMp, S.mp + (it.effect.value || 50));
+      removeItem(itemId, 1);
+    }
+  }
+
+  save();
+  if (typeof renderAdventureScreen === "function" && S.flags && S.flags.adventure) {
+    renderAdventureScreen();
+  }
+  if (typeof render === "function") render();
+  openAdvQuickHealModal(window._advAfterQuickHeal);
+}
+
+function leaveAdventure(isCleared) {
+  if (!S.flags.adventure) {
+    closeAdventureScreen();
+    return;
+  }
+  const adv = S.flags.adventure;
+  const zone = getAdventureZone(adv.zoneId);
+  const zoneName = zone ? zone.name : "历练险地";
+  const gains = adv.gains || { exp: 0, stone: 0, items: {} };
+
+  /* 清理历练临时状态并推进时段 */
+  S.flags.adventure = null;
+  S.flags.adventureLog = null;
+  S.flags.adventureCombat = null;
+  closeAdventureScreen();
+  if (typeof checkAdvanceTimeSlot === "function") {
+    checkAdvanceTimeSlot();
+  }
+  save();
+  render();
+
+  const itemEntries = Object.entries(gains.items || {}).filter(([, cnt]) => cnt > 0);
+  const hasAnyGain = (gains.exp > 0) || (gains.stone > 0) || itemEntries.length > 0;
+
+  let itemsHtml = "";
+  if (itemEntries.length > 0) {
+    const chips = itemEntries.map(([id, cnt]) => {
+      const it = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id];
+      const name = (it && it.name) ? it.name : id;
+      const icon = typeof getItemIcon === "function" ? getItemIcon(it, id) : "📦";
+      return `<div class="settlement-loot-chip"><span>${icon} ${name}</span><b>×${cnt}</b></div>`;
+    }).join("");
+    itemsHtml = `<div class="settlement-loot-grid" style="margin-top:8px;">${chips}</div>`;
+  }
+
+  const title = isCleared ? `🏆 历练凯旋 · ${zoneName}` : `🌲 历练归来 · ${zoneName}`;
+  const bodyHtml = hasAnyGain ? `
+    <div class="card">
+      <div class="row"><span>历练险地</span><b>${zoneName}${isCleared ? '（已通关）' : ''}</b></div>
+      <div class="row"><span>累计修为精进</span><b style="color:#67b7f7;">+${fmt(gains.exp || 0)}</b></div>
+      <div class="row"><span>累计收获灵石</span><b style="color:#f5b956;">+${fmt(gains.stone || 0)}</b></div>
+    </div>
+    ${itemsHtml}
+  ` : `
+    <p>你从【${zoneName}】全身而退，返回宗门调息。</p>
+  `;
+
+  showModal(title, bodyHtml, [
+    { label: "收纳战果", primary: true, fn: closeModal },
   ]);
 }
 
 /* ============================================================
    生成一层路径树
-   ------------------------------------------------------------
-   数据结构（临时存到 S.flags.adventure.tree）：
-   tree = {
-     layers: [ [节点], [节点], ... ],
-     startId: "n_0_0",
-   }
-   每个节点：{ id, type, name, icon, depth, index, children: [idx], data? }
    ============================================================ */
 function generateAdventureLayer(zone, layerConf) {
   const depth = layerConf.depth;             /* 中间层数（不含起始和终点）*/
@@ -147,7 +288,7 @@ function generateAdventureLayer(zone, layerConf) {
   layers.push([{
     id: "n_0_0",
     type: "start",
-    name: "冒险入口",
+    name: "险地入口",
     icon: "🚪",
     depth: 0,
     index: 0,
@@ -161,10 +302,9 @@ function generateAdventureLayer(zone, layerConf) {
 
     /* 决定本层节点数 */
     const prevCount = prevLayer.length;
-    let thisCount = Math.max(2, Math.min(4, prevCount + rndInt(-1, 1)));
+    let thisCount = Math.max(2, Math.min(3, prevCount + rndInt(-1, 1)));
 
     for (let i = 0; i < thisCount; i++) {
-      /* 随机决定节点类型 */
       const t = randomNodeType(d, depth);
       const node = {
         id: `n_${d}_${i}`,
@@ -176,9 +316,7 @@ function generateAdventureLayer(zone, layerConf) {
         children: [],
       };
 
-      /* 填内容 */
       fillNodeContent(node, t, { enemies, storagePool, eventPool });
-
       thisLayer.push(node);
     }
 
@@ -211,8 +349,8 @@ function generateAdventureLayer(zone, layerConf) {
     lastLayer.push({
       id: `end_${i}`,
       type: isFinal ? "exit" : "portal",
-      name: isFinal ? "出口" : "通往下一层",
-      icon: isFinal ? "🚶" : "🌀",
+      name: isFinal ? "秘境出口" : "通往下一层",
+      icon: isFinal ? "🏆" : "🌀",
       depth: depth + 1,
       index: i,
       children: [],
@@ -246,7 +384,7 @@ function generateAdventureLayer(zone, layerConf) {
     const n = candidateNodes.splice(idx, 1)[0];
     n.type = "storage";
     n.icon = "🎒";
-    n.name = "储存袋";
+    n.name = "古修储物袋";
     n.data = { storage: pick(storagePool) };
   }
 
@@ -268,54 +406,61 @@ function generateAdventureLayer(zone, layerConf) {
 
 /* 随机节点类型 */
 function randomNodeType(depth, totalDepth) {
-  /* 越深层，越倾向战斗/储存袋 */
   const ratio = depth / totalDepth;
   const roll = Math.random();
 
-  if (roll < 0.35 + ratio * 0.15) return "fight";
-  if (roll < 0.70 + ratio * 0.1) return "event";
-  if (roll < 0.85) return "empty";
-  return "storage";      /* 概率低，实际由 storage 分配逻辑覆盖 */
+  if (roll < 0.38 + ratio * 0.14) return "fight";
+  if (roll < 0.75 + ratio * 0.08) return "event";
+  if (roll < 0.88) return "empty";
+  return "storage";
 }
 
-/* 填节点内容 */
+/* 填节点内容（赋予具体的妖兽名或奇遇名） */
 function fillNodeContent(node, type, pools) {
   switch (type) {
     case "fight": {
-      node.icon = "⚔️";
-      node.name = "妖兽出没";
-      /* 从敌人池随机选一个 */
       const enemyId = pools.enemies.length > 0
         ? pick(pools.enemies)
         : "e_wolf";
+      const enemyDef = typeof getEnemyById === "function" ? getEnemyById(enemyId) : null;
+      node.icon = (enemyDef && enemyDef.isBeast === false) ? "🗡️" : "⚔️";
+      node.name = enemyDef ? enemyDef.name : "妖兽拦路";
       node.data = { enemyId };
       break;
     }
     case "event": {
-      node.icon = "🌿";
-      node.name = "荒野";
-      if (pools.eventPool.length > 0) {
-        node.data = { event: pick(pools.eventPool) };
+      const ev = pools.eventPool.length > 0
+        ? pick(pools.eventPool)
+        : { text: "你在林间古径缓步前行，吐纳山间清气。", effect: {} };
+      const txt = ev.text || "";
+      if (txt.includes("采") || txt.includes("草") || txt.includes("花") || txt.includes("芝")) {
+        node.icon = "🌿";
+        node.name = "灵草机缘";
+      } else if (txt.includes("石") || txt.includes("匣") || txt.includes("搜")) {
+        node.icon = "💎";
+        node.name = "古修遗宝";
       } else {
-        node.data = { event: { text: "你走了很久。", effect: {} } };
+        node.icon = "✨";
+        node.name = "险地悟道";
       }
+      node.data = { event: ev };
       break;
     }
     case "empty": {
       node.icon = "🪨";
-      node.name = "空地";
+      node.name = "幽静石径";
       node.data = {};
       break;
     }
     case "storage": {
       node.icon = "🎒";
-      node.name = "储存袋";
-      node.data = {};
+      node.name = "古修储物袋";
+      node.data = { storage: pools.storagePool && pools.storagePool.length > 0 ? pick(pools.storagePool) : { type: "stone", amount: [20, 50] } };
       break;
     }
     default:
       node.icon = "🪨";
-      node.name = "未知";
+      node.name = "未知秘径";
       node.data = {};
   }
 }
@@ -334,9 +479,6 @@ function adventureChoose(choiceIdx) {
   adv.path.push(choice);
   adv.currentNodeId = choice.id;
 
-  /* 触发事件 */
-  adventureTriggerNode(choice);
-
   /* 刷新 choices */
   const tree = adv.tree;
   const nextLayer = tree.layers[choice.depth + 1];
@@ -345,6 +487,9 @@ function adventureChoose(choiceIdx) {
   } else {
     adv.choices = [];
   }
+
+  /* 触发事件 */
+  adventureTriggerNode(choice);
 
   save();
   renderAdventureScreen();
@@ -357,19 +502,32 @@ function adventureTriggerNode(node) {
   switch (node.type) {
     case "fight": {
       const enemyId = node.data.enemyId;
+      const enemyDef = typeof getEnemyById === "function" ? getEnemyById(enemyId) : null;
+      const enemyName = enemyDef ? enemyDef.name : node.name;
+      const realmName = (enemyDef && REALMS[enemyDef.realm || 0]) ? REALMS[enemyDef.realm || 0].name : "炼气";
+      const realmBadge = enemyDef ? `${realmName}·${enemyDef.sub || 1}重` : "凶兽";
       const escapeRate = S.flags.adventure.tree.escapeRate || 0.4;
       const canFlee = chance(escapeRate);
-      showModal("遭遇妖兽", `
-        <p>【${node.name}】窜出一只妖兽！</p>
-        ${canFlee ? `<p class="small" style="color:var(--text-dim);">你似乎可以绕开它。</p>` : `<p class="small" style="color:var(--c-bad);">它挡住了去路！</p>`}
+
+      showModal(`⚔️ 遭遇拦路 · ${enemyName}`, `
+        <div class="card" style="margin-bottom:8px;">
+          <div class="row"><span>拦路对手</span><b>${enemyName}</b></div>
+          <div class="row"><span>对手境界</span><b style="color:#f5b956;">${realmBadge}</b></div>
+          ${enemyDef && enemyDef.isBeast && enemyDef.realm === 1 && enemyDef.sub === 1
+            ? `<div class="row"><span>灵兽机缘</span><b style="color:#7fd694;">🐾 可在战斗中施展【驯】收服</b></div>`
+            : ""}
+        </div>
+        ${canFlee
+          ? `<p class="small" style="color:var(--c-good);">对手尚未察觉你的气机，你可正面迎战，亦可敛息绕行。</p>`
+          : `<p class="small" style="color:var(--c-bad);">对手杀机已锁定于你，退路被封，唯有一战！</p>`}
       `, [
-        { label: "迎战", primary: true, fn: () => {
+        { label: "⚔️ 拔剑迎战", primary: true, fn: () => {
           closeModal();
           startAdventureBattle(enemyId);
         }},
-        canFlee ? { label: "绕开", fn: () => {
+        canFlee ? { label: "💨 敛息绕开", fn: () => {
           closeModal();
-          adventureLog(`你绕开了妖兽，继续前行。`, "dim");
+          adventureLog(`你借地势收敛气息，巧妙绕开了【${enemyName}】。`, "dim");
           renderAdventureScreen();
         }} : null,
       ].filter(Boolean));
@@ -377,11 +535,10 @@ function adventureTriggerNode(node) {
     }
 
     case "event": {
-      const ev = node.data.event || { text: "你走了一会儿。", effect: {} };
+      const ev = node.data.event || { text: "你在林间调息片刻。", effect: {} };
       const effect = ev.effect || {};
       const detail = [];
 
-      /* 处理奖励 */
       if (effect.mat) {
         for (const baseId in effect.mat) {
           const count = effect.mat[baseId];
@@ -389,78 +546,105 @@ function adventureTriggerNode(node) {
           const grade = rndInt(gradeRange[0], gradeRange[1]);
           const itemId = baseId + "_" + grade;
           addItem(itemId, count);
-          detail.push(`获得：${baseId}（${grade}品）×${count}`);
+          recordAdventureGain({ itemId, count });
+          const itObj = (typeof getItem === "function" ? getItem(itemId) : null) || ITEMS[itemId];
+          const displayName = (itObj && itObj.name) ? itObj.name : `${baseId}（${grade}品）`;
+          detail.push(`${displayName} ×${count}`);
         }
       }
       if (effect.stone) {
         S.stone += effect.stone;
+        recordAdventureGain({ stone: effect.stone });
         detail.push(`灵石 +${effect.stone}`);
       }
       if (effect.exp) {
         if (typeof gainCultivationExp === "function") gainCultivationExp(effect.exp);
         else S.exp = (S.exp || 0) + effect.exp;
+        recordAdventureGain({ exp: effect.exp });
         detail.push(`修为 +${effect.exp}`);
       }
       if (effect.item) {
         for (const id in effect.item) {
-          addItem(id, effect.item[id]);
-          detail.push(`获得：${ITEMS[id] ? ITEMS[id].name : id} ×${effect.item[id]}`);
+          const finalId = resolveAdventureItemId(id);
+          const cnt = effect.item[id];
+          addItem(finalId, cnt);
+          recordAdventureGain({ itemId: finalId, count: cnt });
+          const itObj = (typeof getItem === "function" ? getItem(finalId) : null) || ITEMS[finalId];
+          detail.push(`${itObj ? itObj.name : finalId} ×${cnt}`);
         }
       }
 
       adventureLog(ev.text, "blue");
       if (detail.length > 0) {
-        adventureLog(detail.join("，"), "good");
+        adventureLog(`机缘收获：${detail.join(" · ")}`, "good");
       }
       renderAdventureScreen();
       break;
     }
 
     case "empty":
-      adventureLog(`【${node.name}】空无一物。`, "dim");
+      adventureLog(`行经【${node.name}】，四周风平浪静，你稍作调息继续前行。`, "dim");
       renderAdventureScreen();
       break;
 
     case "storage": {
-      const storage = node.data.storage || { type: "stone", amount: [10, 30] };
+      const storage = node.data.storage || { type: "stone", amount: [20, 50] };
       const detail = [];
       grantStorageReward(storage, detail);
-      adventureLog(`你发现一个储存袋，${detail.join("、")}。`, "gold");
+      adventureLog(`拾获古修遗留的储物袋：${detail.join("、")}！`, "gold");
       renderAdventureScreen();
       break;
     }
 
-    case "portal":
-      showModal("传送门", `
-        <p>你走到了一道传送门前。</p>
-        <p class="small" style="color:var(--text-dim);">进入下一层？</p>
+    case "portal": {
+      const adv = S.flags.adventure;
+      const zone = adv ? getAdventureZone(adv.zoneId) : null;
+      const nextLayerConf = zone ? zone.layers.find(l => l.layer === (adv.layer + 1)) : null;
+      showModal("🌀 秘境传送古阵", `
+        <p>前方出现一座灵光流转的古传送阵，通往更深层的险境${nextLayerConf ? `【<b>${nextLayerConf.title}</b>】` : ""}。</p>
+        <p class="small" style="color:var(--text-dim);">深层妖物更为强横，但机缘储物袋与灵材品阶亦随之提升。</p>
       `, [
-        { label: "继续探索", fn: closeModal },
-        { label: "进入下一层", primary: true, fn: () => {
+        { label: "留在当前层", fn: closeModal },
+        { label: "🌀 踏入下一层", primary: true, fn: () => {
           closeModal();
           adventureGoToNextLayer();
         }},
       ]);
       break;
+    }
 
     case "exit": {
       const zId = S.flags.adventure && S.flags.adventure.zoneId;
-      if (zId) {
+      const zObj = zId ? getAdventureZone(zId) : null;
+      let clearBonusText = "";
+      if (zId && zObj) {
         if (!S.flags.dungeonsCleared) S.flags.dungeonsCleared = {};
-        if (!S.flags.dungeonsCleared[zId]) {
-          S.flags.dungeonsCleared[zId] = true;
-          const zObj = getAdventureZone(zId);
-          log(`【秘境通关】你成功打通了【${zObj ? zObj.name : zId}】！`, "c-gold");
+        const isFirstClear = !S.flags.dungeonsCleared[zId];
+        S.flags.dungeonsCleared[zId] = true;
+
+        /* 每次抵达关底出口皆可获通关历练感悟与灵石赏赐，首通翻倍 */
+        const baseExp = Math.max(80, (zObj.realmMin + 1) * 120) * (isFirstClear ? 2 : 1);
+        const baseStone = Math.max(60, (zObj.realmMin + 1) * 100) * (isFirstClear ? 2 : 1);
+        if (typeof gainCultivationExp === "function") gainCultivationExp(baseExp);
+        else S.exp = (S.exp || 0) + baseExp;
+        S.stone += baseStone;
+        recordAdventureGain({ exp: baseExp, stone: baseStone });
+
+        clearBonusText = `${isFirstClear ? "🎉 首通秘宝加持" : "✨ 通关嘉奖"}：修为 +${baseExp} · 灵石 +${baseStone}`;
+        adventureLog(`抵达【${zObj.name}】深处出口！${clearBonusText}`, "gold");
+        if (isFirstClear) {
+          log(`【秘境首通】你成功打通了【${zObj.name}】，获首通厚赏！`, "c-gold");
         }
       }
-      showModal("到达秘境出口 · 通关", `
-        <p>你成功抵达秘境深处出口，顺利完成本次历练！</p>
-        <p class="small" style="color:var(--text-gold);">秘境通关记录已更新，可前往【主线道途】领取章节赏赐。</p>
+      showModal("🏆 抵达历练出口 · 圆满通关", `
+        <p>你已穿行至【${zObj ? zObj.name : "历练险地"}】最深处出口，圆满完成此次历练！</p>
+        ${clearBonusText ? `<div class="card"><b style="color:var(--text-gold);">${clearBonusText}</b></div>` : ""}
+        <p class="small" style="color:var(--text-dim);">点击【凯旋结算】即可携全部历练收获返回。</p>
       `, [
-        { label: "继续探索本层", fn: closeModal },
-        { label: "凯旋离开", primary: true, fn: () => {
+        { label: "稍作停留", fn: closeModal },
+        { label: "🏆 凯旋结算离开", primary: true, fn: () => {
           closeModal();
-          leaveAdventure();
+          leaveAdventure(true);
         }},
       ]);
       break;
@@ -471,17 +655,26 @@ function adventureTriggerNode(node) {
 /* 解析并注册可能带品级的丹药 ID（例如 "回春丹_1阶_2品" 或 "筑基丹_3品"） */
 function resolveAdventureItemId(rawId) {
   if (!rawId) return rawId;
-  if (ITEMS[rawId] && ITEMS[rawId].type !== "pillTemplate") return rawId;
   if (typeof getOrCreatePillItem === "function") {
     const m = rawId.match(/^(.+)_([0-5])品$/);
     if (m) {
       const created = getOrCreatePillItem(m[1], parseInt(m[2], 10));
-      if (created) return m[1] + "_" + m[2] + "品";
+      if (created) {
+        ITEMS[rawId] = created;
+        return created.id || rawId;
+      }
     }
     if (ITEMS[rawId] && ITEMS[rawId].type === "pillTemplate") {
       const created = getOrCreatePillItem(rawId, 2);
-      if (created) return rawId + "_2品";
+      if (created) return created.id || (rawId + "_2品");
     }
+  }
+  if (ITEMS[rawId] && ITEMS[rawId].id) {
+    return ITEMS[rawId].id;
+  }
+  if (typeof getItem === "function") {
+    const it = getItem(rawId);
+    if (it) return it.id || rawId;
   }
   return rawId;
 }
@@ -491,16 +684,22 @@ function grantStorageReward(storage, detail) {
   if (storage.type === "stone") {
     const amount = rndInt(storage.amount[0], storage.amount[1]);
     S.stone += amount;
+    recordAdventureGain({ stone: amount });
     detail.push(`灵石 +${amount}`);
   } else if (storage.type === "mat") {
     const grade = rndInt(storage.gradeRange[0], storage.gradeRange[1]);
     const itemId = storage.baseId + "_" + grade;
     addItem(itemId, storage.count);
-    detail.push(`${storage.baseId}（${grade}阶）×${storage.count}`);
+    recordAdventureGain({ itemId, count: storage.count });
+    const itObj = (typeof getItem === "function" ? getItem(itemId) : null) || ITEMS[itemId];
+    const displayName = (itObj && itObj.name) ? itObj.name : `${storage.baseId}（${grade}品）`;
+    detail.push(`${displayName} ×${storage.count}`);
   } else if (storage.type === "item") {
     const finalId = resolveAdventureItemId(storage.id);
     addItem(finalId, storage.count);
-    const name = ITEMS[finalId] ? ITEMS[finalId].name : finalId;
+    recordAdventureGain({ itemId: finalId, count: storage.count });
+    const it = (typeof getItem === "function" ? getItem(finalId) : null) || ITEMS[finalId];
+    const name = it ? it.name : finalId;
     detail.push(`${name} ×${storage.count}`);
   }
 }
@@ -523,7 +722,7 @@ function adventureGoToNextLayer() {
 
   adv.layer = nextLayer;
   generateAdventureLayer(zone, layerConf);
-  adventureLog(`你进入了【${layerConf.title}】。`, "gold");
+  adventureLog(`你踏过传送阵，深入【${layerConf.title}】。`, "gold");
   save();
   renderAdventureScreen();
 }
@@ -532,7 +731,6 @@ function adventureGoToNextLayer() {
    战斗：进入战斗后返回
    ============================================================ */
 function startAdventureBattle(enemyId) {
-  /* 记录：战斗结束后要回到冒险地 */
   S.flags.adventureCombat = {
     enemyId: enemyId,
     returnTo: "adventure",
@@ -551,7 +749,6 @@ function adventureLog(text, cls) {
 
 /* ============================================================
    UI 交互：打开 / 关闭冒险界面
-   （具体渲染在 ui/adventure.js）
    ============================================================ */
 function openAdventureScreen() {
   if (typeof renderAdventureScreen === "function") {

@@ -67,21 +67,38 @@ function heartRateByRoot(roots) {
 function genRoots() {
   const roots = {};
   ROOT_TYPES.forEach(r => { roots[r.id] = 0; });
+
+  /* ★ 开局随机生成 0 到 9 灵根 (0品~9品)
+     0 = 凡体无灵根(0品), 1~9 = 一品至九品天灵根 */
   const roll = Math.random();
-  if (roll < 0.10) {
-    roots[pick(ROOT_TYPES).id] = rndInt(8, 9);
+  let maxGrade;
+  if (roll < 0.05) {
+    maxGrade = 0; // 凡体无灵根 (0品)
+  } else if (roll < 0.15) {
+    maxGrade = rndInt(1, 2); // 1~2品 下品杂灵根
   } else if (roll < 0.35) {
-    const ks = [...ROOT_TYPES].sort(() => Math.random() - 0.5).slice(0, 2).map(x => x.id);
-    ks.forEach(k => roots[k] = rndInt(5, 7));
+    maxGrade = rndInt(3, 4); // 3~4品 中品真灵根
   } else if (roll < 0.65) {
-    const ks = [...ROOT_TYPES].sort(() => Math.random() - 0.5).slice(0, 3).map(x => x.id);
-    ks.forEach(k => roots[k] = rndInt(3, 5));
-  } else if (roll < 0.90) {
-    ["jin", "mu", "shui", "huo", "tu"].forEach(k => roots[k] = rndInt(2, 4));
+    maxGrade = rndInt(5, 6); // 5~6品 上品真灵根
+  } else if (roll < 0.85) {
+    maxGrade = rndInt(7, 8); // 7~8品 地灵根
   } else {
-    ROOT_TYPES.forEach(r => { if (chance(0.5)) roots[r.id] = rndInt(1, 3); });
-    if (Math.max(...Object.values(roots)) < 1) roots[pick(ROOT_TYPES).id] = rndInt(1, 3);
+    maxGrade = 9; // 9品 极品天灵根
   }
+
+  if (maxGrade > 0) {
+    // 随机选定主灵根赋予该品阶 (1~9)
+    const primaryTypes = [...ROOT_TYPES].sort(() => Math.random() - 0.5);
+    roots[primaryTypes[0].id] = maxGrade;
+
+    // 其余辅灵根随机赋予 0 ~ (maxGrade - 1)
+    for (let i = 1; i < primaryTypes.length; i++) {
+      if (Math.random() < 0.4) {
+        roots[primaryTypes[i].id] = rndInt(0, Math.min(maxGrade - 1, 4));
+      }
+    }
+  }
+
   return roots;
 }
 
@@ -135,10 +152,11 @@ function moralityReqText(art) {
 
 /* 心法查询 */
 function getCurrentArt() {
-  if (!S.heartArts || !S.heartArts.current) return null;
+  if (!S || !S.heartArts || !S.heartArts.current) return null;
   return HEART_ARTS.find(a => a.id === S.heartArts.current);
 }
 function getArtProgress(artId) {
+  if (!S || !S.heartArts) return { lvl: 0, exp: 0, proficiency: 0 };
   if (!S.heartArts.progress[artId]) {
     S.heartArts.progress[artId] = { lvl: 0, exp: 0, proficiency: 0 };
   }
@@ -167,7 +185,7 @@ function getPlayerRealmInfo() {
   let bestRealm = 0;
   let bestLvl = 0;
 
-  if (!S.heartArts) return { realm: 0, lvl: 0 };
+  if (!S || !S.heartArts || !Array.isArray(S.heartArts.learned)) return { realm: 0, lvl: 0 };
 
   for (const artId of S.heartArts.learned) {
     const art = HEART_ARTS.find(a => a.id === artId);
@@ -240,7 +258,7 @@ function gainCultivationExp(amount) {
 /* 心法加成（每属性取最高值） */
 function getHeartBonus() {
   const bonus = { power: 0, atk: 0, def: 0, mp: 0, hp: 0, speed: 0 };
-  if (!S.heartArts) return bonus;
+  if (!S || !S.heartArts || !Array.isArray(S.heartArts.learned)) return bonus;
   for (const artId of S.heartArts.learned) {
     const art = HEART_ARTS.find(a => a.id === artId);
     const prog = S.heartArts.progress[artId];
@@ -471,7 +489,14 @@ function totalResistances() {
    ============================================================ */
 
 function getItemDetails(id, count) {
-  const item = (typeof ITEMS !== "undefined" && ITEMS[id]) || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type: "other" };
+  if (!id || id === "undefined" || id === "null") {
+    return {
+      id: "", name: "无名灵物", type: "other", typeName: "修仙灵物", icon: "📦",
+      count: 0, grade: 1, tier: 1, price: 0, desc: "虚无混沌之物。", effectDesc: "",
+      reqDesc: "", statChips: [], statusBadge: null, canAction: false, actionLabel: "", actionFn: "", rawItem: null
+    };
+  }
+  const item = (typeof getItem === "function" ? getItem(id) : null) || (typeof ITEMS !== "undefined" && ITEMS[id]) || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type: "other" };
   const haveCount = count !== undefined ? count : ((S.inventory && S.inventory[id]) || 0);
 
   const typeNameMap = {
@@ -483,14 +508,16 @@ function getItemDetails(id, count) {
     artifact: "本命法宝",
     heavenDefying: "逆天造化",
     pill: "灵丹妙药",
+    pillTemplate: "灵丹妙药",
     food: "灵宠兽粮",
     petBreak: "灵兽破境丹",
     mat: "天材地宝",
     quest: "秘要信物",
+    special: "特别重器",
     other: "杂务雅具",
   };
 
-  const icon = (typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "📦";
+  const icon = (typeof getItemIcon === "function") ? getItemIcon(item, id) : ((typeof ITEM_TYPE_ICONS !== "undefined" && ITEM_TYPE_ICONS[item.type]) || "📦");
   const typeName = typeNameMap[item.type] || "修仙灵物";
 
   let desc = item.desc || "";
@@ -655,7 +682,13 @@ function getItemDetails(id, count) {
   /* ----- 5. 装备 / 法宝 / 逆天宝物 ----- */
   else if (item.type === "equip" || item.type === "artifact" || item.type === "heavenDefying") {
     const slotLabel = (typeof SLOT_NAMES !== "undefined" && SLOT_NAMES[item.slot]) || item.slot || "法器";
-    statChips.push({ label: `部位·${slotLabel}`, color: "gold" });
+    const tg = getItemTierAndGrade(item, id);
+    if (item.type !== "heavenDefying") {
+      statChips.push({ label: `${tg.grade}品${slotLabel}`, color: tg.grade >= 5 ? "gold" : tg.grade >= 3 ? "purple" : "cyan" });
+      statChips.push({ label: `${tg.tier}阶法器`, color: "gold" });
+    } else {
+      statChips.push({ label: `部位·${slotLabel}`, color: "gold" });
+    }
 
     if (item.atk) statChips.push({ label: `攻+${item.atk}`, color: "orange" });
     if (item.def) statChips.push({ label: `防+${item.def}`, color: "blue" });
@@ -675,7 +708,7 @@ function getItemDetails(id, count) {
     if (item.mp) effects.push(`灵力上限 +${item.mp}`);
     if (item.speed) effects.push(`身法速度 +${item.speed}`);
     if (item.spellBonus) effects.push(`法术威力加成 +${Math.round(item.spellBonus * 100)}%`);
-    effectDesc = `【装配属性】${effects.join("，") || "基础防具法器"}。`;
+    effectDesc = `【${tg.tier}阶·${tg.grade}品${slotLabel}】${effects.join("，") || "基础防具法器"}。`;
 
     const isEquipped = S.equipped && Object.values(S.equipped).includes(id);
     if (isEquipped) {
@@ -688,7 +721,7 @@ function getItemDetails(id, count) {
   }
 
   /* ----- 6. 丹药 (pill) ----- */
-  else if (item.type === "pill") {
+  else if (item.type === "pill" || item.type === "pillTemplate") {
     if (item.grade !== undefined) statChips.push({ label: `${item.grade}品丹药`, color: item.grade === 5 ? "gold" : "cyan" });
     if (item.tier) {
       const rName = (typeof REALMS !== "undefined" && REALMS[item.tier]) ? REALMS[item.tier].name : `${item.tier}阶`;
@@ -744,8 +777,34 @@ function getItemDetails(id, count) {
         statChips.push({ label: "驱毒疗伤", color: "green" });
         effectDesc = `清除体内特定负面伤势与中毒状态。`;
         desc = `解除异状负面`;
+      } else if (e.type === "root") {
+        statChips.push({ label: `纯化灵根+${e.value || 1}`, color: "gold" });
+        effectDesc = `洗炼全身骨髓与灵根窍穴，纯化道体根基（永久微调提升灵根潜质）。`;
+        desc = `洗炼骨髓灵根潜质 +${e.value || 1}`;
+      } else if (e.type === "petFood") {
+        statChips.push({ label: `饱腹+${e.hunger || 5}`, color: "green" });
+        statChips.push({ label: `兽修+${e.exp || 10}`, color: "cyan" });
+        effectDesc = `喂养伴生仙兽，回复 ${e.hunger || 5} 饱腹度，提升 ${e.exp || 10} 灵宠修为。`;
+        desc = `灵宠饱腹 +${e.hunger || 5}，经验 +${e.exp || 10}`;
+      } else if (e.type === "petLoyalty") {
+        statChips.push({ label: `灵宠忠诚+${e.value || 10}`, color: "pink" });
+        effectDesc = `滋养灵兽本命精魄，提升伴生灵宠忠诚度与战意。`;
+        desc = `灵宠忠诚度 +${e.value || 10}`;
+      } else if (e.type === "cureAllNonDot") {
+        statChips.push({ label: "驱散异状", color: "green" });
+        effectDesc = `解除体内眩晕、冰冻、沉默、衰竭等所有非持续伤害负面异状。`;
+        desc = `解除非持续性负面状态`;
+      } else if (e.type === "reduceEncounter") {
+        statChips.push({ label: `隐息匿迹`, color: "cyan" });
+        effectDesc = `收敛浑身神光气息，历练探索时减少遭遇强敌的概率。`;
+        desc = `敛息隐匿，降低历练遇敌概率`;
+      } else if (e.type === "alchemyBuff") {
+        statChips.push({ label: `炼丹增幅`, color: "gold" });
+        effectDesc = `丹火与神识共鸣，提升下次炼丹的成丹率与出炉产出。`;
+        desc = `提升下次炼丹成丹率与产出`;
       } else {
-        effectDesc = item.desc || "玄妙灵丹，蕴含造化药性。";
+        effectDesc = (item.desc && item.desc !== "undefined") ? item.desc : "玄妙灵丹，蕴含造化药性。";
+        desc = (item.desc && item.desc !== "undefined") ? item.desc : "玄妙灵丹，蕴含天地药性。";
       }
     }
 
@@ -759,9 +818,14 @@ function getItemDetails(id, count) {
         reqDesc = "无暇绝品，不积累丝毫丹毒。";
         desc += "（纯阳无瑕·无丹毒）";
       } else if (item.danDu) {
-        statChips.push({ label: `丹毒+${item.danDu.toFixed(2)}`, color: "red" });
-        reqDesc = `每次服用累积 +${item.danDu.toFixed(2)} 丹毒（过高会阻碍破境）。`;
-        desc += `（丹毒+${item.danDu.toFixed(2)}）`;
+        const danDuNum = typeof item.danDu === "number"
+          ? item.danDu
+          : (typeof item.danDu === "object" ? Number(item.danDu[item.tier || 1] || 0) : Number(item.danDu) || 0);
+        if (danDuNum > 0) {
+          statChips.push({ label: `丹毒+${danDuNum.toFixed(2)}`, color: "red" });
+          reqDesc = `每次服用累积 +${danDuNum.toFixed(2)} 丹毒（过高会阻碍破境）。`;
+          desc += `（丹毒+${danDuNum.toFixed(2)}）`;
+        }
       }
       if (item.dailyLimit) {
         reqDesc += ` 今日限服 ${item.dailyLimit} 粒。`;
@@ -777,10 +841,11 @@ function getItemDetails(id, count) {
 
   /* ----- 7. 材料 (mat) ----- */
   else if (item.type === "mat") {
-    if (item.grade) statChips.push({ label: `${item.grade}阶天材地宝`, color: "gold" });
+    const tg = getItemTierAndGrade(item, id);
+    statChips.push({ label: `${tg.tier}阶·${tg.grade}品灵材`, color: "gold" });
     statChips.push({ label: "炼丹锻造灵材", color: "cyan" });
     effectDesc = `可投入炼丹炉配制相应品阶灵丹，或于天机鼎作为神兵锻造附灵淬炼之主辅材料。`;
-    desc = desc || `${item.grade || 1} 阶天地钟秀之灵物，采摘自崇山灵脉洞天福地。`;
+    desc = desc || `${tg.tier} 阶 ${tg.grade} 品天地钟秀之灵物，采摘自崇山灵脉洞天福地。`;
   }
 
   /* ----- 8. 兽粮与灵兽丹 ----- */
@@ -806,22 +871,38 @@ function getItemDetails(id, count) {
     } else if (item.type === "quest") {
       statChips.push({ label: "关键剧情信物", color: "purple" });
       effectDesc = "推进主线或支线剧情的重宝机缘信物，不可随意丢弃。";
+    } else if (item.type === "special" || id === "sect_chronicle_scroll") {
+      statChips.push({ label: "代代相传", color: "purple" });
+      statChips.push({ label: "置顶重器", color: "gold" });
+      effectDesc = "记载了历代先贤道号、在世年份、身前修为造诣与道陨因果，供后生晚辈以史为鉴。点击可展卷研读列祖青史。";
+      canAction = true;
+      actionLabel = "📜 研读宗门列祖青史";
+      actionFn = "if(typeof openSectChronicleModal==='function') openSectChronicleModal();";
     }
     desc = desc || "修仙者日常历练或游历红尘所得之随身器具。";
   }
 
+  const safeName = (item.name && item.name !== "undefined" && item.name !== "null")
+    ? item.name
+    : (id && id !== "undefined" && id !== "null" ? id : "修仙灵物");
+
+  const cleanDesc = (desc && desc !== "undefined" && desc !== "null") ? desc : "引天地造化灵气淬炼而成之仙道随身宝物。";
+  const cleanEffect = (effectDesc && effectDesc !== "undefined" && effectDesc !== "null") ? effectDesc : cleanDesc;
+  const tgInfo = getItemTierAndGrade(item, id);
+
   return {
     id,
-    name: item.name || id,
+    name: safeName,
     type: item.type,
     typeName,
     icon,
     count: haveCount,
-    grade: item.grade,
-    tier: item.tier,
+    grade: tgInfo.grade,
+    tier: tgInfo.tier,
+    tierGradeBadge: tgInfo.badge,
     price: item.price || 0,
-    desc,
-    effectDesc,
+    desc: cleanDesc,
+    effectDesc: cleanEffect,
     reqDesc,
     statChips,
     statusBadge,
@@ -832,19 +913,182 @@ function getItemDetails(id, count) {
   };
 }
 
-/* 弹窗查看道具玉简灵鉴（全景详尽说明） */
+/* 统一获取任意物品的【阶 (tier)】与【品 (grade)】及显示标签 */
+function getItemTierAndGrade(item, id) {
+  if (!item) {
+    item = (id && typeof getItem === "function" ? getItem(id) : null) || (id && ITEMS ? ITEMS[id] : null) || {};
+  }
+  let tier = item.tier !== undefined ? Number(item.tier) : 0;
+  let grade = item.grade !== undefined ? Number(item.grade) : 0;
+
+  const t = item.type || "other";
+  if (t === "equip" || t === "artifact") {
+    if (!grade) {
+      const score = (item.atk || 0) + (item.def || 0) + Math.floor((item.hp || 0) / 10);
+      grade = score >= 60 ? 6 : score >= 35 ? 4 : score >= 20 ? 3 : score >= 12 ? 2 : 1;
+    }
+    if (!tier) {
+      tier = grade >= 6 ? 3 : grade >= 4 ? 2 : 1;
+    }
+  } else if (t === "pill" || t === "pillTemplate") {
+    if (!tier) tier = 1;
+    if (item.grade === undefined) grade = 1;
+  } else if (t === "mat") {
+    if (!grade && id) {
+      const m = String(id).match(/_(\d+)$/);
+      if (m) grade = parseInt(m[1], 10);
+    }
+    if (!grade) grade = 1;
+    if (!tier) {
+      tier = grade >= 6 ? 3 : grade >= 4 ? 2 : 1;
+    }
+  } else if (t === "petBreak" || t === "food") {
+    if (!tier) tier = (item.realm || 1);
+    if (!grade) grade = tier * 2 - 1;
+  } else if (t === "heavenDefying") {
+    tier = 5;
+    grade = 7;
+  } else if (t === "heartFragment" || t === "spellbook" || t === "skillbook" || t === "summonbook") {
+    if (!tier) tier = item.realm ? item.realm + 1 : 1;
+    if (!grade) grade = item.grade || (tier * 2 - 1);
+  } else {
+    if (!tier) tier = 1;
+    if (!grade) grade = 1;
+  }
+
+  let badge = `${tier}阶·${grade}品`;
+  if (t === "pill" || t === "pillTemplate") {
+    badge = grade === 0 ? `${tier}阶·废丹` : `${tier}阶·${grade}品`;
+  } else if (t === "heavenDefying") {
+    badge = "逆天至宝";
+  } else if (t === "special" || id === "sect_chronicle_scroll") {
+    badge = "传世重器";
+  }
+
+  return { tier, grade, badge };
+}
+
+/* 行囊统一排序比较器：严格按【阶 (tier) 从高到低】→【品 (grade) 从高到低】→【战力/价格从高到低】 */
+function compareItemsByTierGradeDesc(idA, idB) {
+  const itemA = (typeof getItem === "function" ? getItem(idA) : null) || (ITEMS && ITEMS[idA]) || (typeof findEquipById === "function" ? findEquipById(idA) : null) || {};
+  const itemB = (typeof getItem === "function" ? getItem(idB) : null) || (ITEMS && ITEMS[idB]) || (typeof findEquipById === "function" ? findEquipById(idB) : null) || {};
+
+  const tgA = getItemTierAndGrade(itemA, idA);
+  const tgB = getItemTierAndGrade(itemB, idB);
+
+  if (tgB.tier !== tgA.tier) return tgB.tier - tgA.tier;
+  if (tgB.grade !== tgA.grade) return tgB.grade - tgA.grade;
+
+  const scoreA = (itemA.atk || 0) * 4 + (itemA.def || 0) * 4 + (itemA.hp || 0) * 0.5 + (itemA.mp || 0) * 0.5 + (itemA.price || 0);
+  const scoreB = (itemB.atk || 0) * 4 + (itemB.def || 0) * 4 + (itemB.hp || 0) * 0.5 + (itemB.mp || 0) * 0.5 + (itemB.price || 0);
+  if (scoreB !== scoreA) return scoreB - scoreA;
+
+  const nameA = itemA.name || String(idA);
+  const nameB = itemB.name || String(idB);
+  return nameA.localeCompare(nameB, "zh-CN");
+}
+
+/* 在物品详情弹窗中左右滑动/点击切换到上一个或下一个物品 */
+function navigateItemDetailModal(offset) {
+  const list = (typeof window !== "undefined" && Array.isArray(window._currentBagSortedIds))
+    ? window._currentBagSortedIds
+    : [];
+  const curId = typeof window !== "undefined" ? window._currentDetailItemId : null;
+  if (!curId || list.length <= 1) return;
+  const idx = list.indexOf(curId);
+  if (idx === -1) return;
+  const nextIdx = (idx + offset + list.length) % list.length;
+  const nextId = list[nextIdx];
+  if (nextId) {
+    showItemDetailModal(nextId);
+  }
+}
+
+/* 为物品详情弹窗绑定左右滑动手势（支持触屏 touch 与鼠标拖拽 swipe） */
+function bindItemDetailSwipeGesture() {
+  if (typeof document === "undefined") return;
+  const modalBox = document.getElementById("modalBox");
+  if (!modalBox || modalBox._itemSwipeBound) return;
+  modalBox._itemSwipeBound = true;
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  modalBox.addEventListener("touchstart", (e) => {
+    if (!e.touches || e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  modalBox.addEventListener("touchend", (e) => {
+    if (!tracking || !e.changedTouches || e.changedTouches.length === 0) return;
+    tracking = false;
+    if (!document.querySelector(".item-detail-modal")) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) >= 42 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0) navigateItemDetailModal(1);
+      else navigateItemDetailModal(-1);
+    }
+  }, { passive: true });
+
+  modalBox.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    tracking = true;
+  });
+
+  modalBox.addEventListener("mouseup", (e) => {
+    if (!tracking) return;
+    tracking = false;
+    if (!document.querySelector(".item-detail-modal")) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0) navigateItemDetailModal(1);
+      else navigateItemDetailModal(-1);
+    }
+  });
+}
+
+/* 弹窗查看道具玉简灵鉴（全景详尽说明 + 支持左右滑动切换上下件） */
 function showItemDetailModal(id) {
+  if (!id || id === "undefined" || id === "null") {
+    log("此道法灵物神韵未明，难以展卷探查。", "c-dim");
+    return;
+  }
+  if (typeof window !== "undefined") {
+    window._currentDetailItemId = id;
+  }
   const d = getItemDetails(id);
   const chipsHtml = d.statChips.map(c => `<span class="bag-chip ${c.color || ''}">${c.label}</span>`).join(" ");
 
+  const navList = (typeof window !== "undefined" && Array.isArray(window._currentBagSortedIds))
+    ? window._currentBagSortedIds
+    : [];
+  const navIdx = navList.indexOf(id);
+  const hasSwipeNav = navIdx !== -1 && navList.length > 1;
+  const swipeBarHtml = hasSwipeNav ? `
+    <div class="item-detail-swipe-nav" style="display:flex; justify-content:space-between; align-items:center; padding:4px 8px; margin-bottom:8px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3); border-radius:4px; font-size:11.5px;">
+      <button type="button" class="small" style="padding:2px 8px;" onclick="navigateItemDetailModal(-1)">◀ 上一件</button>
+      <span style="color:var(--text-gold);">第 ${navIdx + 1} / ${navList.length} 件 · 可左右滑动切换</span>
+      <button type="button" class="small" style="padding:2px 8px;" onclick="navigateItemDetailModal(1)">下一件 ▶</button>
+    </div>
+  ` : "";
+
   let body = `
     <div class="item-detail-modal">
+      ${swipeBarHtml}
       <div class="item-detail-header">
         <div class="item-detail-icon">${d.icon}</div>
         <div class="item-detail-header-text">
           <div class="item-detail-title">
             <span>${d.name}</span>
-            <span class="tag gold" style="font-size:11px;">${d.typeName}</span>
+            <span class="tag gold" style="font-size:11px;">${d.tierGradeBadge || d.typeName}</span>
+            <span class="tag" style="font-size:11px;">${d.typeName}</span>
             ${d.count > 0 ? `<span class="tag" style="background:#20170d; color:var(--text-bright); font-size:11px;">拥有 ×${d.count}</span>` : ""}
           </div>
           <div class="item-detail-chips">${chipsHtml}</div>
@@ -852,12 +1096,12 @@ function showItemDetailModal(id) {
       </div>
 
       <div class="item-detail-quote">
-        「${d.desc}」
+        「${(d.desc && d.desc !== 'undefined') ? d.desc : '引天地灵气淬炼而成之仙道随身宝物。'}」
       </div>
 
       <div class="item-detail-section">
         <div class="item-detail-sec-title">✨ 灵物功用与妙理</div>
-        <div class="item-detail-sec-content">${d.effectDesc || "暂无特殊效果记载。"}</div>
+        <div class="item-detail-sec-content">${(d.effectDesc && d.effectDesc !== 'undefined') ? d.effectDesc : (d.desc && d.desc !== 'undefined' ? d.desc : '暂无特殊功用记载。')}</div>
       </div>
   `;
 
@@ -925,31 +1169,20 @@ function showItemDetailModal(id) {
     });
   }
 
-  /* 杂务工具半价卖出 */
-  if (d.type === "other" && S.tools && S.tools[id]) {
-    const sellPrice = Math.floor((d.price || 0) / 2);
+  /* 杂务工具或行囊物品卖出（支持选择数量 + 确认后才卖出） */
+  const isToolOwned = !!(d.type === "other" && S.tools && S.tools[id]);
+  const isEquippedItem = !!(S.equipped && Object.values(S.equipped).includes(id));
+  const canSellFromBag = isToolOwned || (d.count > 0 && d.type !== "quest" && d.type !== "heavenDefying" && !isEquippedItem);
+
+  if (canSellFromBag) {
+    const unitPrice = isToolOwned
+      ? Math.max(1, Math.floor((d.price || 0) / 2))
+      : Math.max(1, Math.floor((d.price || 10) / 2));
+    const curUnit = isToolOwned ? currencyName() : "铜钱";
     actions.push({
-      label: `卖出 (${sellPrice}${currencyName()})`,
+      label: `卖出 (${unitPrice}${curUnit}/个)`,
       fn: () => {
-        closeModal();
-        if (typeof sellTool === "function") sellTool(id);
-        render();
-      }
-    });
-  } else if ((d.type === "pill" || d.type === "mat" || d.type === "equip") && d.count > 0 && !(S.equipped && Object.values(S.equipped).includes(id))) {
-    const sellPrice = Math.max(1, Math.floor((d.price || 10) / 2));
-    actions.push({
-      label: `出售1个 (${sellPrice}铜钱)`,
-      fn: () => {
-        closeModal();
-        if (typeof sellItemToMarket === "function") {
-          sellItemToMarket(id);
-        } else {
-          removeItem(id, 1);
-          S.money = (S.money || 0) + sellPrice;
-          log(`出售 ${d.name} ×1，获得 ${sellPrice} 铜钱。`, "c-good");
-          save(); render();
-        }
+        openSellQuantityModal(id, 1);
       }
     });
   }
@@ -957,6 +1190,192 @@ function showItemDetailModal(id) {
   actions.push({ label: "合上玉简", fn: closeModal });
 
   showModal(`道具灵鉴 · ${d.name}`, body, actions);
+  bindItemDetailSwipeGesture();
+}
+
+/* ============================================================
+   行囊卖出流程：第1步【选择卖出数量】→ 第2步【确认卖出】→ 执行卖出
+   ============================================================ */
+
+function getSellableItemMeta(id) {
+  const d = getItemDetails(id);
+  const isToolOwned = !!(d.type === "other" && S && S.tools && S.tools[id] && (!S.inventory || !S.inventory[id]));
+  const maxCount = isToolOwned ? 1 : ((S && S.inventory && S.inventory[id]) || 0);
+  const unitPrice = isToolOwned
+    ? Math.max(1, Math.floor((d.price || 0) / 2))
+    : Math.max(1, Math.floor((d.price || 10) / 2));
+  const curUnit = isToolOwned ? currencyName() : "铜钱";
+  return { d, isToolOwned, maxCount, unitPrice, curUnit };
+}
+
+function adjustSellModalQty(delta, maxCount, unitPrice, curUnit) {
+  const input = document.getElementById("sellQtyInput");
+  if (!input) return;
+  let val = parseInt(input.value, 10) || 1;
+  if (delta === "max") {
+    val = maxCount;
+  } else if (delta === "min") {
+    val = 1;
+  } else {
+    val = val + Number(delta || 0);
+  }
+  val = Math.max(1, Math.min(maxCount, val));
+  input.value = val;
+  const totalEl = document.getElementById("sellTotalPreview");
+  if (totalEl) {
+    totalEl.textContent = `${fmt(val * unitPrice)} ${curUnit}`;
+  }
+}
+
+function onSellQtyInputChange(maxCount, unitPrice, curUnit) {
+  const input = document.getElementById("sellQtyInput");
+  if (!input) return;
+  let val = parseInt(input.value, 10);
+  if (isNaN(val) || val < 1) val = 1;
+  if (val > maxCount) val = maxCount;
+  input.value = val;
+  const totalEl = document.getElementById("sellTotalPreview");
+  if (totalEl) {
+    totalEl.textContent = `${fmt(val * unitPrice)} ${curUnit}`;
+  }
+}
+
+function openSellQuantityModal(id, initialQty) {
+  if (!S) return;
+  const meta = getSellableItemMeta(id);
+  if (meta.maxCount <= 0) {
+    log("行囊中已无此物品可出售。", "c-bad");
+    closeModal();
+    return;
+  }
+
+  const startQty = Math.max(1, Math.min(meta.maxCount, parseInt(initialQty, 10) || 1));
+  const initTotal = startQty * meta.unitPrice;
+  const safeId = String(id).replace(/'/g, "\\'");
+
+  const body = `
+    <div class="card" style="margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:22px;">${meta.d.icon}</span>
+        <div>
+          <div style="font-weight:700; color:var(--text-gold); font-size:14px;">${meta.d.name} <span class="tag gold">${meta.d.tierGradeBadge || meta.d.typeName}</span></div>
+          <div class="small" style="color:var(--text-dim);">当前持有：<b>×${meta.maxCount}</b>　|　回收单价：<b>${meta.unitPrice} ${meta.curUnit}/个</b></div>
+        </div>
+      </div>
+
+      <div style="margin:10px 0; padding:8px; background:rgba(0,0,0,0.28); border:1px solid var(--border-gold); border-radius:6px;">
+        <div class="small" style="color:var(--text-gold); margin-bottom:6px; text-align:center;">请选择要卖出的数量：</div>
+        <div style="display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="small" onclick="adjustSellModalQty('min', ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">最小(1)</button>
+          ${meta.maxCount >= 10 ? `<button type="button" class="small" onclick="adjustSellModalQty(-10, ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">-10</button>` : ""}
+          <button type="button" class="small" onclick="adjustSellModalQty(-1, ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">-1</button>
+          <input type="number" id="sellQtyInput" min="1" max="${meta.maxCount}" value="${startQty}"
+                 oninput="onSellQtyInputChange(${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')"
+                 style="width:68px; text-align:center; font-weight:700; font-size:14px; padding:4px;">
+          <button type="button" class="small" onclick="adjustSellModalQty(1, ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">+1</button>
+          ${meta.maxCount >= 10 ? `<button type="button" class="small" onclick="adjustSellModalQty(10, ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">+10</button>` : ""}
+          <button type="button" class="small" onclick="adjustSellModalQty('max', ${meta.maxCount}, ${meta.unitPrice}, '${meta.curUnit}')">全部(${meta.maxCount})</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px;">
+        <span>预计总计获得</span>
+        <b id="sellTotalPreview" style="color:var(--text-gold); font-size:14px;">${fmt(initTotal)} ${meta.curUnit}</b>
+      </div>
+    </div>
+  `;
+
+  showModal(`🪙 出售灵物 · ${meta.d.name}`, body, [
+    {
+      label: "下一步：确认卖出",
+      primary: true,
+      fn: () => {
+        const input = document.getElementById("sellQtyInput");
+        const qty = Math.max(1, Math.min(meta.maxCount, parseInt(input ? input.value : startQty, 10) || 1));
+        openSellConfirmModal(id, qty);
+      }
+    },
+    {
+      label: "返回详情",
+      fn: () => {
+        showItemDetailModal(id);
+      }
+    },
+    { label: "取消", fn: closeModal }
+  ]);
+}
+
+function openSellConfirmModal(id, qty) {
+  if (!S) return;
+  const meta = getSellableItemMeta(id);
+  if (meta.maxCount <= 0) {
+    closeModal();
+    return;
+  }
+  const finalQty = Math.max(1, Math.min(meta.maxCount, parseInt(qty, 10) || 1));
+  const totalGain = finalQty * meta.unitPrice;
+
+  const body = `
+    <div class="card" style="margin-bottom:8px; border:1px solid var(--border-gold);">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="font-size:24px;">${meta.d.icon}</span>
+        <div>
+          <div style="font-weight:700; color:var(--text-gold); font-size:15px;">${meta.d.name}</div>
+          <div class="small" style="color:var(--text-dim);">${meta.d.tierGradeBadge || meta.d.typeName}</div>
+        </div>
+      </div>
+      <div class="row"><span>确认卖出数量</span><b>×${finalQty}（持有 ×${meta.maxCount}）</b></div>
+      <div class="row"><span>回收单价</span><b>${meta.unitPrice} ${meta.curUnit} / 个</b></div>
+      <div class="row"><span>共计可获资财</span><b style="color:var(--text-gold); font-size:14px;">+${fmt(totalGain)} ${meta.curUnit}</b></div>
+    </div>
+    <p class="small" style="color:var(--c-bad); text-align:center; margin:4px 0 0;">
+      ⚠️ 请确认：卖出后该物品将从行囊中扣除，点击【确认卖出】后立即成交。
+    </p>
+  `;
+
+  showModal(`⚠️ 确认卖出 · ${meta.d.name}`, body, [
+    {
+      label: `确认卖出 (×${finalQty})`,
+      primary: true,
+      fn: () => {
+        executeConfirmedSell(id, finalQty);
+      }
+    },
+    {
+      label: "重选数量",
+      fn: () => {
+        openSellQuantityModal(id, finalQty);
+      }
+    },
+    { label: "取消", fn: closeModal }
+  ]);
+}
+
+function executeConfirmedSell(id, qty) {
+  if (!S) return;
+  const meta = getSellableItemMeta(id);
+  if (meta.maxCount <= 0) {
+    closeModal();
+    return;
+  }
+  const finalQty = Math.max(1, Math.min(meta.maxCount, parseInt(qty, 10) || 1));
+  const totalGain = finalQty * meta.unitPrice;
+
+  if (meta.isToolOwned) {
+    delete S.tools[id];
+    addCurrency(totalGain);
+  } else {
+    removeItem(id, finalQty);
+    S.money = (S.money || 0) + totalGain;
+  }
+
+  closeModal();
+  log(`【行囊出售】卖出 ${meta.d.name} ×${finalQty}，获得 ${totalGain} ${meta.curUnit}。`, "c-good");
+  save();
+  if (typeof renderProfile === "function" && document.getElementById("profileMask")?.classList.contains("show")) {
+    renderProfile();
+  }
+  render();
 }
 
 /* ============================================================
@@ -1015,4 +1434,26 @@ function calcSecretRealmRecommendedPower(ev) {
   const realmMin = ev.realmMin !== undefined ? ev.realmMin : 1;
   if (realmMin === 0) return 180;
   return Math.floor(realmMin * 450 + 50);
+}
+
+/* 检查并推进时辰阶段（防止历练或其它耗时行动耗尽行动力后卡死在当前时段） */
+function checkAdvanceTimeSlot() {
+  if (!S) return false;
+  let advanced = false;
+  while (S.actionsUsed >= ACTIONS_PER_SLOT && S.hour < 2) {
+    S.hour++;
+    S.actionsUsed = Math.max(0, S.actionsUsed - ACTIONS_PER_SLOT);
+    log(`【时辰流转】进入${HOURS[S.hour]}。`, "c-blue");
+    advanced = true;
+    if (S.hour === 2) {
+      setTimeout(() => {
+        if (typeof nightPrompt === "function") nightPrompt();
+      }, 400);
+    }
+  }
+  return advanced;
+}
+
+if (typeof window !== "undefined") {
+  window.checkAdvanceTimeSlot = checkAdvanceTimeSlot;
 }

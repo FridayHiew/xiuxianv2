@@ -290,7 +290,10 @@ const SECRET_EVENTS = {
     {
       id: "B1_elder_secret",
       name: "长老秘境",
-      unlockCond: null,   /* 剧情代码用 unlockSecretEvent("B1_elder_secret") 解锁 */
+      icon: "🏔️",
+      desc: "宗门长老手札记载的隐秘山谷，古墓前残剑蕴藏前辈剑意。",
+      unlockHint: "修为达炼气期且为门外及以上弟子（或获长老手札指引）",
+      unlockCond: { minRealm: 1, minRankIdx: 1 },
       realmMin: 1,
       realmMax: 6,
       start: "s1",
@@ -299,53 +302,168 @@ const SECRET_EVENTS = {
           title: "长老手札",
           visual: "📜",
           text: [
-            "长老给你的手札中，夹着一张<span class='gold'>残破的地图</span>。",
-            "地图标注了一处隐秘之地。",
+            "长老留下的手札中，夹着一张<span class='gold'>残破的地图</span>。",
+            "地图标注了一处群峰环绕的隐秘古谷。",
           ],
           choices: [
-            { label: "按图索骥", next: "s2" },
+            { label: "按图索骥深入山谷", next: "s2" },
             { label: "暂不前往", next: "END" },
           ],
         },
         s2: {
-          title: "秘地",
+          title: "古谷残碑",
           visual: "🏔️",
           text: [
-            "你依照地图，来到一处山谷。",
-            "谷中有一座<span class='purple'>无名的墓碑</span>。",
-            "墓碑前放着一柄<span class='gold'>锈剑</span>。",
+            "你依照地图，来到一处幽静山谷。",
+            "谷中有一座<span class='purple'>无名的墓碑</span>，墓碑前斜插着一柄<span class='gold'>古铜锈剑</span>。",
           ],
           choices: [
-            { label: "取剑", next: "s3a", reward: { exp: 300, note: "锈剑" } },
-            { label: "拜祭后离开", next: "s3b" },
+            { label: "拔起锈剑感悟剑意", next: "s3a", reward: { exp: 300, stone: 80, note: "古剑残意" } },
+            { label: "虔诚拜祭后离开", next: "s3b" },
           ],
         },
         s3a: {
           title: "锈剑入手",
           visual: "⚔️",
           text: [
-            "你握住锈剑，锈迹纷纷剥落，",
-            "露出<span class='gold'>古铜色的剑身</span>。",
-            "<span class='good'>剑中残存着一丝剑意。</span>",
+            "你握住锈剑，斑驳锈迹纷纷剥落，露出<span class='gold'>古铜色的剑身</span>。",
+            "<span class='good'>剑中残存的一缕凌厉剑意涌入经脉，修为大进！</span>",
           ],
           choices: [
-            { label: "离开", next: "END" },
+            { label: "收剑离开秘境", next: "END" },
           ],
         },
         s3b: {
           title: "敬重古人",
           visual: "🙏",
           text: [
-            "你躬身拜了三拜，转身离去。",
-            "<span class='dim'>心中一片清明。</span>",
+            "你躬身拜了三拜，石碑下忽然露出一枚<span class='gold'>静心丹与灵石</span>。",
+            "<span class='dim'>心中一片澄澈清明。</span>",
           ],
           choices: [
-            { label: "离开", next: "END", reward: { exp: 100, note: "心境" } },
+            { label: "拜谢离开秘境", next: "END", reward: { exp: 160, stone: 120, item: "静心丹", count: 1, note: "前辈馈赠" } },
           ],
         },
       },
     },
-    /* 其余 B 组留空，等后续剧情填 */
+    {
+      id: "B2_alchemy_ruins",
+      name: "丹阳古洞",
+      icon: "🔥",
+      desc: "昔日丹阳真人坐化遗留的炼丹洞天，药圃余温尚存，丹炉内似有残丹。",
+      unlockHint: "炼丹造诣达 Lv.1 或修为达炼气 3 重",
+      unlockCond: { minRealm: 1, minSub: 3, orSkill: { name: "炼丹", lvl: 1 } },
+      realmMin: 1,
+      realmMax: 6,
+      start: "s1",
+      scenes: {
+        s1: {
+          title: "丹洞石门",
+          visual: "🔥",
+          text: [
+            "循着山间若有若无的异香，你在断崖藤蔓后发现一座<span class='gold'>赤铜石门</span>。",
+            "门楣上刻着「丹阳洞天」四字，缝隙间溢出一缕醇厚药香。",
+          ],
+          choices: [
+            { label: "运起灵力推门而入", next: "s2a" },
+            { label: "先在门外古药圃采摘", next: "s2b", reward: { mat: "紫猴花", gradeRange: [1, 2], count: 2, note: "古圃灵草" } },
+          ],
+        },
+        s2a: {
+          title: "八卦紫金炉",
+          visual: "⚗️",
+          text: [
+            "洞内中央立着一尊半人高的<span class='purple'>八卦丹炉</span>，炉底地火尚未完全熄灭。",
+            "炉盖微颤，似有成丹即将出炉，四周石壁上还刻着丹道心得。",
+          ],
+          choices: [
+            { label: "开炉收取灵丹", next: "s3a", reward: { item: "聚气丹", count: 2, stone: 150, note: "古炉遗丹" } },
+            { label: "静坐参悟石壁丹诀", next: "s3b", reward: { exp: 320, note: "丹道真解" } },
+          ],
+        },
+        s2b: {
+          title: "洞外灵泉",
+          visual: "💧",
+          text: [
+            "你小心采下药圃中的灵草，又发现岩壁下有一汪<span class='blue'>温润灵泉</span>。",
+            "泉底闪烁着晶莹的灵石光泽。",
+          ],
+          choices: [
+            { label: "掬水饮用并收取灵石", next: "END", reward: { exp: 180, stone: 140, note: "灵泉洗髓" } },
+          ],
+        },
+        s3a: {
+          title: "丹香满室",
+          visual: "💊",
+          text: [
+            "炉盖开启，数枚圆润灵丹飞入掌中，炉底更散落着不少上品灵石。",
+            "<span class='good'>此次丹洞之行收获颇丰！</span>",
+          ],
+          choices: [
+            { label: "心满意足离开", next: "END" },
+          ],
+        },
+        s3b: {
+          title: "大道同参",
+          visual: "✨",
+          text: [
+            "你将石壁上的控火吐纳之术尽数记下，体内真元随之运转周天。",
+            "<span class='good'>修为与心境皆大有长进！</span>",
+          ],
+          choices: [
+            { label: "稽首礼敬后离开", next: "END" },
+          ],
+        },
+      },
+    },
+    {
+      id: "B3_sword_tomb",
+      name: "万剑荒冢",
+      icon: "🗡️",
+      desc: "上古剑修宗门遗留的试剑荒冢，万千残剑共鸣，唯有心志坚定者可得剑魄机缘。",
+      unlockHint: "修为达筑基期 或 剑法造诣达 Lv.2",
+      unlockCond: { minRealm: 2, orSkill: { name: "剑法", lvl: 2 } },
+      realmMin: 1,
+      realmMax: 7,
+      start: "s1",
+      scenes: {
+        s1: {
+          title: "剑气峡谷",
+          visual: "🗡️",
+          text: [
+            "踏入荒冢外围，凛冽剑风迎面扑来，满地皆是历代剑修遗留的<span class='gold'>断剑残锋</span>。",
+            "峡谷深处传来阵阵清越剑鸣，似在考验来客。",
+          ],
+          choices: [
+            { label: "顶着剑压直趋剑冢核心", next: "s2a", special: true },
+            { label: "在外围搜寻残存遗物", next: "s2b", reward: { stone: 220, note: "古修遗物" } },
+          ],
+        },
+        s2a: {
+          title: "剑魄石台",
+          visual: "⚡",
+          text: [
+            "你顶住凌厉剑意登上石台，台心悬浮着一团耀眼的<span class='purple'>太白剑魄</span>。",
+            "石台下还压着一卷古旧秘册。",
+          ],
+          choices: [
+            { label: "炼化剑魄淬炼修为", next: "END", reward: { exp: 550, stone: 180, note: "太白剑魄" } },
+            { label: "收取石台下的灵材与灵石", next: "END", reward: { stone: 380, mat: "玉髓芝", gradeRange: [2, 3], count: 2, note: "剑台秘藏" } },
+          ],
+        },
+        s2b: {
+          title: "外围收获",
+          visual: "💎",
+          text: [
+            "你在几处古修遗骸旁寻得储物残袋，内有不少灵石与疗伤丹药。",
+            "剑冢深处剑气愈发狂暴，你决定见好就收。",
+          ],
+          choices: [
+            { label: "稳妥退离荒冢", next: "END", reward: { exp: 180, item: "回血丹", count: 2, note: "稳妥收获" } },
+          ],
+        },
+      },
+    },
   ],
 
   /* ============================================================
@@ -637,15 +755,43 @@ function pickSecretEventFromGroup(group) {
   return pick(candidates);
 }
 
-/* B 组解锁判定 */
+/* B 组解锁判定（支持显式解锁 + 满足条件自动解锁） */
 function isSecretEventUnlocked(id) {
-  if (!S.flags.secretUnlocked) return false;
-  return !!S.flags.secretUnlocked[id];
+  if (!S || !S.flags) return false;
+  if (!S.flags.secretUnlocked) S.flags.secretUnlocked = {};
+  if (S.flags.secretUnlocked[id]) return true;
+
+  const ev = (SECRET_EVENTS.B || []).find(e => e.id === id);
+  if (!ev || !ev.unlockCond) return false;
+
+  const cond = ev.unlockCond;
+  const info = typeof getPlayerRealmInfo === "function" ? getPlayerRealmInfo() : { realm: 0, lvl: 0 };
+  const rank = (S.flags && S.flags.rank) || "杂务";
+  const rankIdx = typeof RANKS !== "undefined" ? RANKS.indexOf(rank) : 0;
+
+  let realmOk = true;
+  if (cond.minRealm !== undefined && info.realm < cond.minRealm) realmOk = false;
+  if (cond.minSub !== undefined && info.realm === (cond.minRealm || 1) && info.lvl < cond.minSub) realmOk = false;
+  if (cond.minRankIdx !== undefined && rankIdx < cond.minRankIdx) realmOk = false;
+
+  let skillOk = false;
+  if (cond.orSkill && S.skills && S.skills[cond.orSkill.name]) {
+    if ((S.skills[cond.orSkill.name].lvl || 0) >= (cond.orSkill.lvl || 1)) {
+      skillOk = true;
+    }
+  }
+
+  if (realmOk || skillOk) {
+    S.flags.secretUnlocked[id] = true;
+    return true;
+  }
+  return false;
 }
 
 function unlockSecretEvent(id) {
   if (!S.flags.secretUnlocked) S.flags.secretUnlocked = {};
   if (S.flags.secretUnlocked[id]) return;
   S.flags.secretUnlocked[id] = true;
-  log(`【秘境解锁】你得知了一处秘境：${id}`, "c-gold");
+  const ev = getSecretEventById(id);
+  log(`【秘境解锁】你获知了一处机缘秘境：【${ev ? ev.name : id}】！`, "c-gold");
 }

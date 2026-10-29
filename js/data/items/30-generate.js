@@ -16,38 +16,41 @@
 
 const MAT_BASE = [
   /* 已有材料 */
-  { id: "洗骨花",     name: "洗骨花",     maxGrade: 9, basePrice: 5   },
-  { id: "草木灰",     name: "草木灰",     maxGrade: 9, basePrice: 2   },
-  { id: "清泉水",     name: "清泉水",     maxGrade: 9, basePrice: 3   },
-  { id: "玉髓芝",     name: "玉髓芝",     maxGrade: 7, basePrice: 20  },
-  { id: "寒血果",     name: "寒血果",     maxGrade: 7, basePrice: 25  },
-  { id: "紫猴花",     name: "紫猴花",     maxGrade: 7, basePrice: 22  },
-  { id: "水系妖丹",   name: "水系妖丹",   maxGrade: 7, basePrice: 30  },
-  { id: "千年降压草", name: "千年降压草", maxGrade: 9, basePrice: 100 },
-  { id: "火精枣",     name: "火精枣",     maxGrade: 9, basePrice: 80  },
-  { id: "妖兽精血",   name: "妖兽精血",   maxGrade: 9, basePrice: 150 },
-  { id: "天地灵乳",   name: "天地灵乳",   maxGrade: 9, basePrice: 300 },
+  { id: "洗骨花",     name: "洗骨花",     maxGrade: 9, basePrice: 5,   icon: "🌿" },
+  { id: "草木灰",     name: "草木灰",     maxGrade: 9, basePrice: 2,   icon: "🌿" },
+  { id: "清泉水",     name: "清泉水",     maxGrade: 9, basePrice: 3,   icon: "💧" },
+  { id: "玉髓芝",     name: "玉髓芝",     maxGrade: 7, basePrice: 20,  icon: "🌿" },
+  { id: "寒血果",     name: "寒血果",     maxGrade: 7, basePrice: 25,  icon: "🌿" },
+  { id: "紫猴花",     name: "紫猴花",     maxGrade: 7, basePrice: 22,  icon: "🌿" },
+  { id: "水系妖丹",   name: "水系妖丹",   maxGrade: 7, basePrice: 30,  icon: "🔮" },
+  { id: "千年降压草", name: "千年降压草", maxGrade: 9, basePrice: 100, icon: "🌿" },
+  { id: "火精枣",     name: "火精枣",     maxGrade: 9, basePrice: 80,  icon: "🌿" },
+  { id: "妖兽精血",   name: "妖兽精血",   maxGrade: 9, basePrice: 150, icon: "🩸" },
+  { id: "天地灵乳",   name: "天地灵乳",   maxGrade: 9, basePrice: 300, icon: "💧" },
 
   /* 新增：丹药核心材料 */
-  { id: "妖丹",       name: "妖丹",       maxGrade: 9, basePrice: 30  },
-  { id: "赤血草",     name: "赤血草",     maxGrade: 9, basePrice: 10  },
-  { id: "紫芝草",     name: "紫芝草",     maxGrade: 9, basePrice: 10  },
-  { id: "清灵草",     name: "清灵草",     maxGrade: 9, basePrice: 15  },
+  { id: "妖丹",       name: "妖丹",       maxGrade: 9, basePrice: 30,  icon: "🔮" },
+  { id: "赤血草",     name: "赤血草",     maxGrade: 9, basePrice: 10,  icon: "🌿" },
+  { id: "紫芝草",     name: "紫芝草",     maxGrade: 9, basePrice: 10,  icon: "🌿" },
+  { id: "清灵草",     name: "清灵草",     maxGrade: 9, basePrice: 15,  icon: "🌿" },
 
   /* 新增：饲灵丸材料 */
-  { id: "诱妖草",     name: "诱妖草",     maxGrade: 3, basePrice: 8   },
-  { id: "清心花",     name: "清心花",     maxGrade: 3, basePrice: 8   },
-  { id: "聚妖草",     name: "聚妖草",     maxGrade: 6, basePrice: 20  },
-  { id: "妖肉",       name: "妖肉",       maxGrade: 6, basePrice: 25  },
-  { id: "龙心九叶芝", name: "龙心九叶芝", maxGrade: 9, basePrice: 200 },
+  { id: "诱妖草",     name: "诱妖草",     maxGrade: 3, basePrice: 8,   icon: "🌿" },
+  { id: "清心花",     name: "清心花",     maxGrade: 3, basePrice: 8,   icon: "🌿" },
+  { id: "聚妖草",     name: "聚妖草",     maxGrade: 6, basePrice: 20,  icon: "🌿" },
+  { id: "妖肉",       name: "妖肉",       maxGrade: 6, basePrice: 25,  icon: "🍖" },
+  { id: "龙心九叶芝", name: "龙心九叶芝", maxGrade: 9, basePrice: 200, icon: "🌿" },
 ];
 
 MAT_BASE.forEach(m => {
   for (let g = 1; g <= m.maxGrade; g++) {
-    ITEMS[m.id + "_" + g] = {
+    const matId = m.id + "_" + g;
+    ITEMS[matId] = {
+      id: matId,
       type: "mat",
       name: m.name,
       baseId: m.id,
+      icon: m.icon || "🌿",
       grade: g,
       maxGrade: m.maxGrade,
       price: m.basePrice * g,
@@ -344,12 +347,24 @@ function makeTiered(idBase, idSuffix, tierMin, tierMax, opts) {
    3. 生成 ITEMS 条目（仅"基础模板"，品级运行时生成）
    ============================================================ */
 
+const PILL_TEMPLATES = {};
+
 PILL_BASE.forEach(p => {
+  const canonicalId = p.id.indexOf("_") > 0 ? p.id : (p.tier ? p.id + "_" + p.tier + "阶" : p.id);
+  const baseVal = (p.baseEffect && p.baseEffect[p.tier]) || 0;
+  const defaultRealVal = p.noGrade
+    ? baseVal
+    : ((baseVal > 0 && baseVal < 1) ? +(baseVal * 0.2).toFixed(2) : Math.round(baseVal * 0.2));
   const tpl = {
+    id: canonicalId,
     type: "pillTemplate",
     effectType: p.type,
     name: p.name,
+    baseId: canonicalId,
     tier: p.tier,
+    grade: 1,
+    price: Math.max(10, Math.floor((baseVal >= 1 ? baseVal / 5 : 50 * p.tier))),
+    usableIn: "field",
     realmReq: p.realmReq,
     baseEffect: p.baseEffect,
     danDu: p.danDu,
@@ -360,12 +375,20 @@ PILL_BASE.forEach(p => {
     extra: p.extra,
     noGrade: p.noGrade,
   };
+  tpl.effect = buildPillEffect(tpl, 1, defaultRealVal);
+
+  PILL_TEMPLATES[p.id] = tpl;
+  PILL_TEMPLATES[canonicalId] = tpl;
   ITEMS[p.id] = tpl;
+  ITEMS[canonicalId] = tpl;
+
   if (p.id.indexOf("_") > 0) {
     const base = p.id.split("_")[0];
+    if (!PILL_TEMPLATES[base]) PILL_TEMPLATES[base] = tpl;
     if (!ITEMS[base]) ITEMS[base] = tpl;
   } else if (p.tier) {
     const alt = p.id + "_" + p.tier + "阶";
+    if (!PILL_TEMPLATES[alt]) PILL_TEMPLATES[alt] = tpl;
     if (!ITEMS[alt]) ITEMS[alt] = tpl;
   }
 });
@@ -378,41 +401,58 @@ PILL_BASE.forEach(p => {
    - 1~5 品：按品级% 生成
    ============================================================ */
 
-function getOrCreatePillItem(templateId, grade) {
+function findPillTemplate(templateId) {
   if (!templateId) return null;
-  let cleanId = String(templateId).replace(/_\d+阶_\d+阶$/, (m) => m.substring(m.length - 3));
-  let template = ITEMS[cleanId];
-  if (!template || template.type !== "pillTemplate") {
-    const stripped = cleanId.replace(/_\d+阶$/, "");
-    if (ITEMS[stripped] && ITEMS[stripped].type === "pillTemplate") {
-      template = ITEMS[stripped];
-      cleanId = stripped;
-    } else {
-      for (let t = 1; t <= 9; t++) {
-        const alt = stripped + "_" + t + "阶";
-        if (ITEMS[alt] && ITEMS[alt].type === "pillTemplate") {
-          template = ITEMS[alt];
-          cleanId = alt;
-          break;
-        }
-      }
+  let cleanId = String(templateId)
+    .replace(/_\d+品$/, "")
+    .replace(/_基础$/, "")
+    .replace(/_\d+阶_\d+阶$/, (m) => m.substring(m.length - 3));
+
+  if (PILL_TEMPLATES[cleanId]) {
+    return { template: PILL_TEMPLATES[cleanId], cleanId: PILL_TEMPLATES[cleanId].id || cleanId };
+  }
+  if (ITEMS[cleanId] && (ITEMS[cleanId].type === "pillTemplate" || ITEMS[cleanId].baseEffect)) {
+    return { template: ITEMS[cleanId], cleanId: ITEMS[cleanId].id || cleanId };
+  }
+
+  const stripped = cleanId.replace(/_\d+阶$/, "");
+  if (PILL_TEMPLATES[stripped]) {
+    const t = PILL_TEMPLATES[stripped];
+    return { template: t, cleanId: t.id || stripped };
+  }
+  for (let t = 1; t <= 9; t++) {
+    const alt = stripped + "_" + t + "阶";
+    if (PILL_TEMPLATES[alt]) {
+      return { template: PILL_TEMPLATES[alt], cleanId: alt };
+    }
+    if (ITEMS[alt] && (ITEMS[alt].type === "pillTemplate" || ITEMS[alt].baseEffect)) {
+      return { template: ITEMS[alt], cleanId: alt };
     }
   }
-  if (!template || template.type !== "pillTemplate") return null;
+  return null;
+}
+
+function getOrCreatePillItem(templateId, grade) {
+  const found = findPillTemplate(templateId);
+  if (!found || !found.template) return null;
+  const template = found.template;
+  const cleanId = found.cleanId;
+  const shortBase = cleanId.replace(/_\d+阶$/, "");
 
   /* 不分品级：直接把模板转成实际物品 */
   if (template.noGrade) {
     const id = cleanId + "_基础";
     if (!ITEMS[id]) {
-      const baseValue = template.baseEffect[template.tier] || 0;
+      const baseValue = (template.baseEffect && template.baseEffect[template.tier]) || 0;
       const eff = buildPillEffect(template, 1, baseValue);
       ITEMS[id] = {
+        id: id,
         type: "pill",
         name: template.name,
         baseId: cleanId,
         tier: template.tier,
         grade: 1,
-        price: 10,
+        price: 10 * (template.tier || 1),
         desc: template.desc || "灵兽食料",
         usableIn: "field",
         effect: eff,
@@ -421,6 +461,8 @@ function getOrCreatePillItem(templateId, grade) {
         noGrade: true,
       };
       if (typeof registerItemToBucket === "function") registerItemToBucket(id);
+    } else if (!ITEMS[id].id) {
+      ITEMS[id].id = id;
     }
     return ITEMS[id];
   }
@@ -430,6 +472,7 @@ function getOrCreatePillItem(templateId, grade) {
     const id = cleanId + "_0品";
     if (!ITEMS[id]) {
       ITEMS[id] = {
+        id: id,
         type: "pill",
         name: template.name + "（废丹）",
         baseId: cleanId,
@@ -441,18 +484,29 @@ function getOrCreatePillItem(templateId, grade) {
         noGrade: false,
       };
       if (typeof registerItemToBucket === "function") registerItemToBucket(id);
+    } else if (!ITEMS[id].id) {
+      ITEMS[id].id = id;
     }
+    const shortZeroId = shortBase + "_0品";
+    if (!ITEMS[shortZeroId]) ITEMS[shortZeroId] = ITEMS[id];
     return ITEMS[id];
   }
 
   /* 1~5 品 */
   const id = cleanId + "_" + grade + "品";
-  if (ITEMS[id]) return ITEMS[id];
+  if (ITEMS[id]) {
+    if (!ITEMS[id].id) ITEMS[id].id = id;
+    const shortGradeId = shortBase + "_" + grade + "品";
+    if (!ITEMS[shortGradeId]) ITEMS[shortGradeId] = ITEMS[id];
+    return ITEMS[id];
+  }
 
   /* 品级效果百分比 */
-  const gradePct = [0, 0.2, 0.4, 0.6, 0.8, 1.0][grade] || 0;
+  const gradePct = [0, 0.2, 0.4, 0.6, 0.8, 1.0][grade] || 0.2;
   const baseValue = (template.baseEffect && template.baseEffect[template.tier]) || 0;
-  const realValue = Math.round(baseValue * gradePct);
+  const realValue = (baseValue > 0 && baseValue < 1)
+    ? +(baseValue * gradePct).toFixed(2)
+    : Math.round(baseValue * gradePct);
 
   /* 丹毒（按品级递减：1品100%，2品80%，3品60%，4品40%，5品0%） */
   const danDuBase = (template.danDu && template.danDu[template.tier]) || 0;
@@ -474,6 +528,10 @@ function getOrCreatePillItem(templateId, grade) {
     dynamicDesc = `破境成功率 +${Math.round(realValue * 100)}%`;
   } else if (effType === "fasting") {
     dynamicDesc = `辟谷 ${Math.floor(realValue)} 天`;
+  } else if (effType === "reduceEncounter") {
+    dynamicDesc = `减少遇敌概率 ${Math.round(realValue * 100)}%`;
+  } else if (effType === "petLoyalty") {
+    dynamicDesc = `出战灵宠忠诚度 +${realValue}`;
   }
   if (realDanDu > 0) {
     dynamicDesc += `（丹毒 +${realDanDu}）`;
@@ -481,13 +539,16 @@ function getOrCreatePillItem(templateId, grade) {
     dynamicDesc += "（纯阳无暇·无丹毒）";
   }
 
+  const priceBase = baseValue >= 1 ? Math.floor(baseValue / 10 * gradePct) : Math.floor(50 * (template.tier || 1) * gradePct);
+
   ITEMS[id] = {
+    id: id,
     type: "pill",
     name: template.name + "（" + grade + "品）",
     baseId: cleanId,
     tier: template.tier,
     grade: grade,
-    price: Math.max(1, Math.floor(baseValue / 10 * gradePct)),
+    price: Math.max(1, priceBase),
     desc: dynamicDesc,
     usableIn: "field",
     effect: eff,
@@ -496,8 +557,26 @@ function getOrCreatePillItem(templateId, grade) {
     noGrade: false,
   };
   if (typeof registerItemToBucket === "function") registerItemToBucket(id);
+
+  /* 同时注册不含阶数的简写别名（如 "聚气丹_3品"、"筑基丹_3品"、"降尘丹_4品"） */
+  const shortGradeId = shortBase + "_" + grade + "品";
+  if (!ITEMS[shortGradeId]) {
+    ITEMS[shortGradeId] = ITEMS[id];
+  }
   return ITEMS[id];
 }
+
+/* 预生成所有丹药模板的各品级条目，确保读档或任意地方直接访问 ITEMS[id] 永不 undefined */
+PILL_BASE.forEach(p => {
+  const canonicalId = p.id.indexOf("_") > 0 ? p.id : (p.tier ? p.id + "_" + p.tier + "阶" : p.id);
+  if (p.noGrade) {
+    getOrCreatePillItem(canonicalId, 1);
+  } else {
+    for (let g = 0; g <= 5; g++) {
+      getOrCreatePillItem(canonicalId, g);
+    }
+  }
+});
 
 /* 根据模板 + 品级生成 effect */
 function buildPillEffect(template, grade, realValue) {

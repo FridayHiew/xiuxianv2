@@ -5,12 +5,14 @@
    ============================================================ */
 
 const FORGE_MATERIALS_BASE = [
-  { id: "玄铁", name: "玄铁", maxGrade: 5, basePrice: 20 },
-  { id: "寒铁", name: "寒铁", maxGrade: 5, basePrice: 40 },
-  { id: "赤铜", name: "赤铜", maxGrade: 5, basePrice: 60 },
-  { id: "秘银", name: "秘银", maxGrade: 7, basePrice: 150 },
-  { id: "天金", name: "天金", maxGrade: 7, basePrice: 400 },
+  { id: "玄铁", name: "玄铁", maxGrade: 7, basePrice: 20,  isForgeMat: true, icon: "⚒️" },
+  { id: "寒铁", name: "寒铁", maxGrade: 7, basePrice: 40,  isForgeMat: true, icon: "⚒️" },
+  { id: "赤铜", name: "赤铜", maxGrade: 7, basePrice: 60,  isForgeMat: true, icon: "⚒️" },
+  { id: "秘银", name: "秘银", maxGrade: 7, basePrice: 150, isForgeMat: true, icon: "⚒️" },
+  { id: "天金", name: "天金", maxGrade: 7, basePrice: 400, isForgeMat: true, icon: "⚒️" },
 ];
+
+const FORGE_MATERIALS = [];
 
 if (typeof ITEMS !== "undefined") {
   FORGE_MATERIALS_BASE.forEach(m => {
@@ -18,15 +20,22 @@ if (typeof ITEMS !== "undefined") {
       const itemId = m.id + "_" + g;
       if (!ITEMS[itemId]) {
         ITEMS[itemId] = {
+          id: itemId,
           type: "mat",
           name: m.name,
           baseId: m.id,
+          icon: m.icon || "⚒️",
+          isForgeMat: true,
           grade: g,
           maxGrade: m.maxGrade,
           price: m.basePrice * g,
-          desc: `${g} 品炼器材料`,
+          desc: `${g} 品炼器灵材，可用于天机器室锻造护道法器。`,
         };
+      } else {
+        ITEMS[itemId].icon = m.icon || "⚒️";
+        ITEMS[itemId].isForgeMat = true;
       }
+      FORGE_MATERIALS.push(ITEMS[itemId]);
     }
   });
 }

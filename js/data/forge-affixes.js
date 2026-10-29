@@ -55,10 +55,17 @@ function rollAffixValue(affix, grade) {
   return Math.max(1, Math.round(value));
 }
 
-/* 每个品级词条数 */
+/* 每个品级词条数（受炼器造诣加成：Lv.5+ 有50%概率额外+1词条，Lv.9+ 必定额外+1词条） */
 function getAffixCountByGrade(grade) {
-  const table = [0, 0, 1, 1, 2, 2, 3, 4];  /* index = grade，0 和 1 品 0 条 */
-  return table[grade] || 0;
+  const table = [0, 0, 1, 1, 2, 2, 3, 4];  /* index = grade，0 和 1 品基础 0 条 */
+  let count = table[grade] || 0;
+  const skillLv = (typeof getForgeSkillLv === "function") ? getForgeSkillLv() : 0;
+  if (skillLv >= 9) {
+    count += 1;
+  } else if (skillLv >= 5 && Math.random() < 0.5) {
+    count += 1;
+  }
+  return Math.min(4, count);
 }
 
 /* 随机生成 N 条词条（不重复） */

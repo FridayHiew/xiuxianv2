@@ -34,6 +34,10 @@ function render() {
     _savedVerticalScroll[_lastPanoramaKey] = oldVScroller.scrollTop;
   }
 
+  /* 记录当前全屏详情滚动位置 */
+  const oldDetailScroller = box.querySelector(".fs-detail-scroll-body");
+  const savedDetailScroll = oldDetailScroller ? oldDetailScroller.scrollTop : 0;
+
   const nextKey = getPanoramaStateKey();
   const isSameKey = (nextKey === _lastPanoramaKey);
   _lastPanoramaKey = nextKey;
@@ -49,12 +53,25 @@ function render() {
   else if (currentTab === "cultivatePage") box.innerHTML = renderCultivatePage();
   else box.innerHTML = renderCave();
 
+  if (savedDetailScroll > 0) {
+    const newDetailScroller = box.querySelector(".fs-detail-scroll-body");
+    if (newDetailScroller) {
+      newDetailScroller.scrollTop = savedDetailScroll;
+    }
+  }
+
   if (typeof syncFullScreenDetailChrome === "function") {
     syncFullScreenDetailChrome();
   }
 
   initPanoramaScroll(box, nextKey, isSameKey);
   initVerticalStageScroll(box, nextKey, isSameKey);
+  if (currentTab === "bag" && typeof bindBagPageSwipeGesture === "function") {
+    bindBagPageSwipeGesture();
+  }
+  if (currentTab === "cave" && caveSubPanel && typeof bindCavePageSwipeGesture === "function") {
+    bindCavePageSwipeGesture();
+  }
 }
 
 function initVerticalStageScroll(box, stateKey, isSameKey) {
@@ -125,11 +142,9 @@ function initPanoramaScroll(box, stateKey, isSameKey) {
     scroller.style.scrollBehavior = "auto";
     if (isSameKey && typeof _savedPanoramaScroll[stateKey] === "number") {
       scroller.scrollLeft = _savedPanoramaScroll[stateKey];
-    } else if (scroller.dataset.initAlign === "left") {
-      scroller.scrollLeft = 0;
     } else {
-      /* 默认居中展示主画心（左阙与右阙可左右滑动揽胜） */
-      scroller.scrollLeft = Math.round(maxScroll / 2);
+      /* 洞府、仙途、宗门、历练等按进去后默认展示最左边 */
+      scroller.scrollLeft = 0;
     }
     requestAnimationFrame(() => {
       scroller.style.scrollBehavior = "";
@@ -291,11 +306,11 @@ function debugPromoteToMennei() {
 function debugStartBattleMulti() {
   const options = [
     { label: "1 只野狼", fn: () => { closeModal(); startBattle([{ enemyId: "e_wolf" }]); } },
-    { label: "2 只（野狼 + 黑蛇）", fn: () => { closeModal(); startBattle([
-      { enemyId: "e_wolf" }, { enemyId: "e_snake" }
+    { label: "2 只（野狼 + 白鳞幼蛇）", fn: () => { closeModal(); startBattle([
+      { enemyId: "e_wolf" }, { enemyId: "e_white_snake_tiny" }
     ]); } },
-    { label: "3 只（野狼 + 黑蛇 + 山猪）", fn: () => { closeModal(); startBattle([
-      { enemyId: "e_wolf" }, { enemyId: "e_snake" }, { enemyId: "e_boar" }
+    { label: "3 只（野狼 + 白鳞幼蛇 + 钢鬃黑野猪）", fn: () => { closeModal(); startBattle([
+      { enemyId: "e_wolf" }, { enemyId: "e_white_snake_tiny" }, { enemyId: "e_boar_iron" }
     ]); } },
     { label: "取消", fn: closeModal },
   ];
@@ -335,27 +350,98 @@ function toggleDebugRoot() {
   render();
 }
 
-/* ========== Debug：加材料 ========== */
+/* ========== Debug：加材料（含炼器材料与炼丹材料） ========== */
 
 function debugAddMaterial() {
-  if (typeof MAT_BASE === "undefined" || !MAT_BASE) {
+  const forgeMats = (typeof FORGE_MATERIALS_BASE !== "undefined" && Array.isArray(FORGE_MATERIALS_BASE))
+    ? FORGE_MATERIALS_BASE
+    : [];
+  const herbMats = (typeof MAT_BASE !== "undefined" && Array.isArray(MAT_BASE))
+    ? MAT_BASE
+    : [];
+
+  if (forgeMats.length === 0 && herbMats.length === 0) {
     log("[DEBUG] 材料数据未加载", "c-bad");
     return;
   }
 
-  /* 第一步：选材料 */
-  const options = MAT_BASE.map(m => ({
-    label: `${m.name}（1~${m.maxGrade} 品）`,
-    fn: () => { closeModal(); debugAddMaterialGrade(m); },
-  }));
+  const options = [];
+
+  /* 快捷一键添加全部炼器灵材（包含炼器配方所需的草木灰/妖兽精血/火精枣/寒血果/天地灵乳） */
+  options.push({
+    label: "★ 一键满配全部【炼器材料】（1~7品 各+50）",
+    primary: true,
+    fn: () => {
+      closeModal();
+      const forgeAuxIds = ["草木灰", "妖兽精血", "火精枣", "寒血果", "天地灵乳"];
+      forgeMats.forEach(m => {
+        for (let g = 1; g <= (m.maxGrade || 7); g++) {
+          addItem(`${m.id}_${g}`, 50);
+        }
+      });
+      forgeAuxIds.forEach(auxId => {
+        for (let g = 1; g <= 7; g++) {
+          if (ITEMS[`${auxId}_${g}`]) addItem(`${auxId}_${g}`, 50);
+        }
+      });
+      log("[DEBUG] 已添加全部炼器五金灵材及辅料（1~7品 各×50）", "c-gold");
+      save(); render();
+    },
+  });
+
+  /* 快捷一键添加全部炼丹药材 */
+  options.push({
+    label: "★ 一键满配全部【炼丹药材】（各品级 +50）",
+    fn: () => {
+      closeModal();
+      herbMats.forEach(m => {
+        for (let g = 1; g <= m.maxGrade; g++) {
+          addItem(`${m.id}_${g}`, 50);
+        }
+      });
+      log("[DEBUG] 已添加全部炼丹灵草药材（各品级 ×50）", "c-gold");
+      save(); render();
+    },
+  });
+
+  /* 单独选择炼器材料 */
+  forgeMats.forEach(m => {
+    const ico = m.icon || "⚒️";
+    options.push({
+      label: `${ico} 【炼器】${m.name}（1~${m.maxGrade} 品）`,
+      fn: () => { closeModal(); debugAddMaterialGrade(m); },
+    });
+  });
+
+  /* 单独选择炼丹/通用材料 */
+  herbMats.forEach(m => {
+    const ico = m.icon || (typeof getItemIcon === "function" ? getItemIcon(m, m.id) : "🌿");
+    options.push({
+      label: `${ico} 【灵材】${m.name}（1~${m.maxGrade} 品）`,
+      fn: () => { closeModal(); debugAddMaterialGrade(m); },
+    });
+  });
+
   options.push({ label: "取消", fn: closeModal });
 
-  showModal("加材料 · 选择材料", "<p>选择要加入背包的材料：</p>", options);
+  showModal("加材料 · 选择炼器或炼丹材料", "<p>选择要加入行囊的炼器五金或天材地宝：</p>", options);
 }
 
 function debugAddMaterialGrade(mat) {
   /* 第二步：选品级 */
   const options = [];
+  options.push({
+    label: `★ 全部品级（1~${mat.maxGrade}品）各 +50`,
+    primary: true,
+    fn: () => {
+      closeModal();
+      for (let g = 1; g <= mat.maxGrade; g++) {
+        addItem(`${mat.id}_${g}`, 50);
+      }
+      log(`[DEBUG] 获得 ${mat.name}（1~${mat.maxGrade}品）各 ×50`, "c-gold");
+      save(); render();
+    },
+  });
   for (let g = 1; g <= mat.maxGrade; g++) {
     options.push({
       label: `${g} 品`,
@@ -394,45 +480,79 @@ function debugAddMaterialCount(mat, grade) {
   showModal(`加材料 · ${mat.name}（${grade} 品）`, "<p>选择数量：</p>", options);
 }
 
-/* ========== Debug：加丹方 ========== */
+/* ========== Debug：加丹方 / 炼器谱 ========== */
 
 function debugAddRecipe() {
-  if (typeof RECIPES === "undefined" || !RECIPES) {
-    log("[DEBUG] 丹方数据未加载", "c-bad");
+  const unknownAlchemy = (typeof RECIPES !== "undefined" && RECIPES)
+    ? RECIPES.filter(r => !isRecipeKnown(r.id))
+    : [];
+  const unknownForge = (typeof FORGE_RECIPES !== "undefined" && FORGE_RECIPES)
+    ? FORGE_RECIPES.filter(r => (typeof isForgeRecipeExchangeableInSect === "function" ? isForgeRecipeExchangeableInSect(r) : (r.grade || 1) <= 6) && !(typeof isForgeRecipeKnown === "function" && isForgeRecipeKnown(r.id)))
+    : [];
+
+  if (unknownAlchemy.length === 0 && unknownForge.length === 0) {
+    log("[DEBUG] 已解锁全部丹方与金丹期及以下炼器谱", "c-gold");
     return;
   }
 
-  const unknown = RECIPES.filter(r => !isRecipeKnown(r.id));
-  if (unknown.length === 0) {
-    log("[DEBUG] 已解锁全部丹方", "c-gold");
-    return;
+  const options = [];
+
+  if (unknownForge.length > 0) {
+    options.push({
+      label: `★ 一键解锁全部【金丹及以下炼器谱】（${unknownForge.length} 个）`,
+      primary: true,
+      fn: () => {
+        closeModal();
+        if (!S.flags.knownForgeRecipes) S.flags.knownForgeRecipes = {};
+        unknownForge.forEach(r => { S.flags.knownForgeRecipes[r.id] = true; });
+        log(`[DEBUG] 解锁全部金丹及以下炼器谱（${unknownForge.length} 个）`, "c-gold");
+        save(); render();
+      },
+    });
   }
 
-  const options = unknown.map(r => ({
-    label: `${r.name}（${r.tier} 阶）`,
-    fn: () => {
-      closeModal();
-      if (!S.flags.knownRecipes) S.flags.knownRecipes = {};
-      S.flags.knownRecipes[r.id] = true;
-      log(`[DEBUG] 解锁丹方《${r.name}》`, "c-gold");
-      save(); render();
-    },
-  }));
+  if (unknownAlchemy.length > 0) {
+    options.push({
+      label: `★ 一键解锁全部【丹方】（${unknownAlchemy.length} 个）`,
+      fn: () => {
+        closeModal();
+        if (!S.flags.knownRecipes) S.flags.knownRecipes = {};
+        RECIPES.forEach(r => { S.flags.knownRecipes[r.id] = true; });
+        log(`[DEBUG] 解锁全部丹方（${RECIPES.length} 个）`, "c-gold");
+        save(); render();
+      },
+    });
+  }
 
-  options.unshift({
-    label: "★ 全部解锁 ★",
-    fn: () => {
-      closeModal();
-      if (!S.flags.knownRecipes) S.flags.knownRecipes = {};
-      RECIPES.forEach(r => { S.flags.knownRecipes[r.id] = true; });
-      log(`[DEBUG] 解锁全部丹方（${RECIPES.length} 个）`, "c-gold");
-      save(); render();
-    },
+  unknownForge.forEach(r => {
+    options.push({
+      label: `⚒️ 器谱：《${r.name}》（${r.grade}品）`,
+      fn: () => {
+        closeModal();
+        if (!S.flags.knownForgeRecipes) S.flags.knownForgeRecipes = {};
+        S.flags.knownForgeRecipes[r.id] = true;
+        log(`[DEBUG] 解锁炼器谱《${r.name}》`, "c-gold");
+        save(); render();
+      },
+    });
+  });
+
+  unknownAlchemy.forEach(r => {
+    options.push({
+      label: `💊 丹方：《${r.name}》（${r.tier} 阶）`,
+      fn: () => {
+        closeModal();
+        if (!S.flags.knownRecipes) S.flags.knownRecipes = {};
+        S.flags.knownRecipes[r.id] = true;
+        log(`[DEBUG] 解锁丹方《${r.name}》`, "c-gold");
+        save(); render();
+      },
+    });
   });
 
   options.push({ label: "取消", fn: closeModal });
 
-  showModal("加丹方 · 未解锁列表", `<p>共 ${unknown.length} 个未解锁：</p>`, options);
+  showModal("加丹方 / 炼器谱 · 未解锁列表", `<p>未解锁炼器谱 ${unknownForge.length} 个 · 未解锁丹方 ${unknownAlchemy.length} 个：</p>`, options);
 }
 
 
@@ -451,8 +571,13 @@ function die(reason) {
     return;
   }
 
-  const name = S.name;
-  const life = Math.floor(S.life);
+  /* ★ 记录宗门先祖青史：在清除 S 前将玩家名字、仙历年份、生前境界、死因写入宗门历史 */
+  if (typeof recordSectChronicleEntry === "function") {
+    recordSectChronicleEntry(reason);
+  }
+
+  const name = (S && S.name) || "道友";
+  const life = Math.floor((S && S.life) || 16);
 
   /* ① 删角色档：一命通关核心 */
   try {
@@ -460,15 +585,18 @@ function die(reason) {
   } catch (e) { /* ignore */ }
 
   /* ② 先把 S 置空，再弹窗，防止 beforeunload 把死亡角色写回 */
-  S.hp = 0;
+  if (S) S.hp = 0;
   S = null;
 
-  /* ③ 弹死亡界面 */
+  /* ③ 弹死亡与轮回界面：仅保留轮回重开按钮，不出现返回因果结算或青史按钮 */
   showModal("身死道消", `
-    <p>${reason}</p>
-    <p>道号：${name}　享年：${life}岁</p>
+    <p style="font-size:14px; line-height:1.7;">${reason}</p>
+    <div style="background:rgba(212,163,71,0.08); border:1px solid rgba(212,163,71,0.25); border-radius:6px; padding:8px 12px; margin:10px 0;">
+      <p style="margin:2px 0;">道号：<b>${name}</b>　享年：<b>${life}</b> 岁</p>
+      <p class="small" style="color:var(--text-gold); margin:4px 0 0;">📜 前世生平因果已载入宗门实录。转世拜入宗门后，可在随身道具【特别】中随时研读历祖先贤与前世青史！</p>
+    </div>
   `, [
-    { label: "重开一生", fn: () => { closeModal(); resetGame(); } },
+    { label: "轮回转世 · 重开一生", primary: true, fn: () => { closeModal(); resetGame(); } },
   ]);
 }
 

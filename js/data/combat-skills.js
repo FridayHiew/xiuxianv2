@@ -5,8 +5,8 @@
 const COMBAT_SKILLS = [
   /* ===== 剑 ===== */
   { id: "sk_sword1", name: "基础剑招", type: "剑", target: "enemySingle",
-    skillReq: { "剑": 1 }, cost: { hp: 5 }, power: 1.3,
-    desc: "基础剑法，消耗少量血气" },
+    skillReq: {}, cost: { hp: 5 }, power: 1.3,
+    desc: "青锋基础剑招，消耗少量血气，对敌单体造成伤害" },
 
   { id: "sk_sword2", name: "连环剑", type: "剑", target: "enemyAll",
     skillReq: { "剑": 4 }, cost: { hp: 15 }, power: 1.2,
@@ -19,8 +19,8 @@ const COMBAT_SKILLS = [
 
   /* ===== 刀 ===== */
   { id: "sk_blade1", name: "劈砍", type: "刀", target: "enemySingle",
-    skillReq: { "刀": 1 }, cost: { hp: 5 }, power: 1.3,
-    desc: "基础刀法" },
+    skillReq: {}, cost: { hp: 5 }, power: 1.3,
+    desc: "开山刀法劈砍，消耗少量血气" },
 
   { id: "sk_blade2", name: "狂刀斩", type: "刀", target: "enemySingle",
     skillReq: { "刀": 4 }, cost: { hp: 18 }, power: 2.2,
@@ -29,8 +29,8 @@ const COMBAT_SKILLS = [
 
   /* ===== 拳 ===== */
   { id: "sk_fist1", name: "直拳", type: "拳", target: "enemySingle",
-    skillReq: { "拳": 1 }, cost: { hp: 4 }, power: 1.2,
-    desc: "基础拳法" },
+    skillReq: {}, cost: { hp: 4 }, power: 1.2,
+    desc: "伏山直拳，刚猛拳劲消耗少量血气" },
 
   { id: "sk_fist2", name: "崩拳", type: "拳", target: "enemySingle",
     skillReq: { "拳": 4 }, cost: { hp: 15 }, power: 2.0,
@@ -38,22 +38,27 @@ const COMBAT_SKILLS = [
 
   /* ===== 掌 ===== */
   { id: "sk_palm1", name: "推掌", type: "掌", target: "enemySingle",
-    skillReq: { "掌": 1 }, cost: { hp: 5 }, power: 1.3,
-    desc: "基础掌法" },
+    skillReq: {}, cost: { hp: 5 }, power: 1.3,
+    desc: "穿云推掌，以柔克刚单体击伐" },
 
   { id: "sk_palm2", name: "摧心掌", type: "掌", target: "enemySingle",
     skillReq: { "掌": 5 }, cost: { hp: 20 }, power: 2.3,
     desc: "摧心掌力" },
 
+  /* ===== 腿 ===== */
+  { id: "sk_leg1", name: "连环旋风腿", type: "拳", target: "enemyAll",
+    skillReq: {}, cost: { hp: 5 }, power: 1.1,
+    desc: "腿随心走，连环旋风劲横扫周围敌阵（消耗少量气血）" },
+
   /* ===== 棍 ===== */
   { id: "sk_staff1", name: "横扫", type: "棍", target: "enemyAll",
-    skillReq: { "棍": 1 }, cost: { hp: 6 }, power: 1.0,
-    desc: "横扫千军，攻击全体敌人" },
+    skillReq: {}, cost: { hp: 6 }, power: 1.0,
+    desc: "齐眉横扫千军，攻击全体敌人" },
 
   /* ===== 鞭 ===== */
   { id: "sk_whip1", name: "鞭击", type: "鞭", target: "enemySingle",
-    skillReq: { "鞭": 1 }, cost: { hp: 6 }, power: 1.4,
-    desc: "基础鞭法" },
+    skillReq: {}, cost: { hp: 6 }, power: 1.4,
+    desc: "灵蛇鞭击，基础鞭法" },
 
   /* ===== 兽 ===== */
   { id: "sk_beast1", name: "兽吼", type: "兽", target: "enemySingle",

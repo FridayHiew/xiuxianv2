@@ -14,7 +14,7 @@ const STORY_CHAPTERS = [
     triggerLvl: 0,
     triggerConditionText: "初入仙门（凡人境自动开启）",
     maxRealmName: "炼气期三重",
-    bgImage: "./src/assets/images/cave_cultivation_1792114546452.jpg",
+    bgImage: "./src/assets/images/cave_cultivation_1792114544316.jpg",
     location: "{sectName} · 外门青石院",
     desc: "三日前雷雨之夜，云渊林氏古族惨遭黑衣魔修屠戮。你怀揣先祖临终托付的秘宝【太渊道玉】逃入仙山，拜入【{sectName}】外门。从洒扫砍柴的杂务弟子做起，在子夜道玉的共鸣下感气吐纳、洗尽凡胎，揭开波澜壮阔的修真长卷。",
     dialogues: [
@@ -226,7 +226,7 @@ const STORY_CHAPTERS = [
     triggerLvl: 8,
     triggerConditionText: "修为达到【炼气期八重】或【筑基期】自动触发",
     maxRealmName: "筑基期二层",
-    bgImage: "./src/assets/images/sect_mountain_1792114544521.jpg",
+    bgImage: "./src/assets/images/sect_mountain_gate_1792114544883.jpg",
     location: "古仙洞天 · 丹霞秘境",
     desc: "参悟《练气基础·下卷》修至炼气后期，凡躯百载寿元终有尽时。唯有闯入十年一开的古仙洞天【丹霞秘境】，夺取千年灵药与《太渊筑基诀》，冲破炼气十重圆满的天地桎梏，方能凝气成液、铸就无上道基，寿享二百载！",
     dialogues: [

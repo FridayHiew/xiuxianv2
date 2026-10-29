@@ -1,19 +1,42 @@
 /* ============================================================
-   layout.css - 响应式仙侠布局系统 (rem / vw / dvh · Flexbox & Grid)
+   layout.css - 响应式仙侠布局系统 (温润宣纸 + 青绿仙山 提亮版)
    ============================================================ */
 
 body {
   background-color: var(--bg-dark);
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(55, 38, 20, 0.4) 0%, transparent 70%),
-    radial-gradient(circle at 80% 30%, rgba(20, 30, 48, 0.3) 0%, transparent 60%);
+    var(--xuan-fiber-pattern),
+    radial-gradient(ellipse at 50% 0%, rgba(116, 214, 190, 0.28) 0%, transparent 68%),
+    radial-gradient(circle at 82% 25%, rgba(248, 212, 130, 0.22) 0%, transparent 60%),
+    url("../src/assets/images/global_shuimo_qinglv_bg.svg");
+  background-size: 64px 64px, 100% 100%, 100% 100%, cover;
+  background-position: center center;
   background-attachment: fixed;
   color: var(--text-main);
   font-family: var(--font-sans);
   min-height: 100dvh;
   padding: 0;
   margin: 0;
+  position: relative;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 全局固定水墨青绿仙山远景底图（Subtle Fixed Ink-Wash Shanshui Layer） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(180deg, rgba(22, 42, 38, 0.58) 0%, rgba(30, 56, 50, 0.42) 48%, rgba(19, 36, 33, 0.68) 100%),
+    url("../src/assets/images/global_shuimo_qinglv_bg.svg"),
+    url("../src/assets/images/sect_mountain_gate_1792114544883.jpg");
+  background-size: cover, cover, cover;
+  background-position: center, center bottom, center 25%;
+  background-blend-mode: normal, screen, soft-light;
+  opacity: 0.92;
+  filter: saturate(1.12) contrast(1.02);
 }
 
 /* ========== 全局应用外壳：100dvh 弹性纵向容器 ========== */
@@ -57,11 +80,16 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem;
-  padding: 0.25rem 0.55rem;
-  background: linear-gradient(180deg, rgba(26, 20, 14, 0.96) 0%, rgba(16, 12, 8, 0.92) 100%);
+  padding: 0.26rem 0.55rem;
+  background-image:
+    var(--xuan-fiber-pattern),
+    var(--xuan-tint-sheen),
+    linear-gradient(180deg, rgba(38, 64, 58, 0.82) 0%, rgba(26, 46, 42, 0.85) 100%);
+  backdrop-filter: blur(0.45rem) saturate(1.15);
+  -webkit-backdrop-filter: blur(0.45rem) saturate(1.15);
   border: 0.06rem solid var(--border-gold);
   border-radius: var(--radius-md);
-  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.15rem 0.45rem rgba(8, 18, 16, 0.42), inset 0 0.05rem 0 rgba(255, 245, 215, 0.22);
 }
 
 .top-utility-left {
@@ -76,18 +104,19 @@ body {
   font-family: var(--font-serif);
   font-size: 0.85rem;
   font-weight: 700;
-  color: #f6dca0;
-  background: linear-gradient(135deg, #4b2518, #28120b);
-  border: 0.06rem solid #c99642;
+  color: #fff6e0;
+  background: linear-gradient(135deg, #a63429, #751f17);
+  border: 0.06rem solid #f0b878;
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-xs);
   letter-spacing: 0.08rem;
   flex-shrink: 0;
+  box-shadow: 0 0.08rem 0.25rem rgba(0, 0, 0, 0.35);
 }
 
 .game-brand-sub {
   font-size: 0.75rem;
-  color: #d6c5a5;
+  color: #dfece6;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -104,22 +133,23 @@ body {
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #382c1a, #18130c);
-  border: 0.08rem solid var(--border-gold);
-  color: var(--text-gold);
+  background: radial-gradient(circle at 35% 32%, #fbf5e6 0%, #e4d4b4 72%, #c4ae82 100%);
+  border: 0.08rem solid #7c5f2e;
+  color: #261a0c;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 0.12rem 0.35rem rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0.12rem 0.32rem rgba(8, 18, 16, 0.42), 0 0 0 0.05rem rgba(242, 207, 120, 0.45);
   flex-shrink: 0;
   transition: transform 0.15s ease, border-color 0.2s ease;
 }
 
 .icon-btn:hover {
   border-color: var(--border-gold-bright);
+  transform: translateY(-0.05rem);
 }
 
 .icon-btn:active {
@@ -143,7 +173,7 @@ body {
   min-width: 0.95rem;
   text-align: center;
   display: none;
-  border: 0.06rem solid rgba(255, 255, 255, 0.4);
+  border: 0.06rem solid rgba(255, 255, 255, 0.5);
 }
 
 .icon-btn.log-icon.has-new .badge {
@@ -155,10 +185,15 @@ body {
   flex-shrink: 0;
   padding: 0.3rem 0.55rem;
   margin: 0;
-  background: linear-gradient(180deg, #241d15 0%, #17120c 100%);
-  border: 0.06rem solid #6b5331;
+  background-image:
+    var(--xuan-fiber-pattern),
+    var(--xuan-tint-sheen),
+    linear-gradient(180deg, rgba(39, 65, 60, 0.80) 0%, rgba(28, 49, 45, 0.84) 100%);
+  backdrop-filter: blur(0.45rem) saturate(1.15);
+  -webkit-backdrop-filter: blur(0.45rem) saturate(1.15);
+  border: 0.06rem solid #b08f4a;
   border-radius: var(--radius-md);
-  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.65);
+  box-shadow: 0 0.15rem 0.45rem rgba(8, 18, 16, 0.42), inset 0 0.05rem 0 rgba(255, 245, 215, 0.2);
   position: relative;
 }
 
@@ -175,10 +210,10 @@ body {
   align-items: center;
   gap: 0.35rem;
   cursor: pointer;
-  padding: 0.15rem 0.4rem 0.15rem 0.15rem;
+  padding: 0.15rem 0.42rem 0.15rem 0.18rem;
   border-radius: var(--radius-sm);
-  background: rgba(212, 163, 71, 0.08);
-  border: 0.06rem solid rgba(212, 163, 71, 0.3);
+  background: rgba(248, 238, 212, 0.1);
+  border: 0.06rem solid rgba(235, 200, 120, 0.42);
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -187,9 +222,9 @@ body {
   width: 1.55rem;
   height: 1.55rem;
   border-radius: 50%;
-  background: radial-gradient(circle, #3d2c16, #140f08);
-  border: 0.08rem solid #e3b963;
-  color: #ffe299;
+  background: radial-gradient(circle at 35% 30%, #315950, #19332e);
+  border: 0.08rem solid #f0ca72;
+  color: #ffeaad;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,21 +243,21 @@ body {
   font-family: var(--font-serif);
   font-size: 0.82rem;
   font-weight: 700;
-  color: #fff0c4;
+  color: #fff6dc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .om-realm-pct {
-  color: #7ee084;
+  color: #84f29a;
   font-size: 0.72rem;
   margin-left: 0.15rem;
 }
 
 .om-realm-sub {
   font-size: 0.66rem;
-  color: #b8a688;
+  color: #cbe0d8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -239,8 +274,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  background: rgba(10, 8, 5, 0.75);
-  border: 0.06rem solid #4a3922;
+  background: rgba(18, 33, 30, 0.72);
+  border: 0.06rem solid rgba(206, 171, 95, 0.45);
   border-radius: 0.75rem;
   padding: 0.1rem 0.38rem;
   font-size: 0.72rem;
@@ -251,7 +286,7 @@ body {
 }
 
 .om-cur-val {
-  color: #f5d98e;
+  color: #ffe294;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -265,25 +300,25 @@ body {
 
 .om-time-year {
   font-size: 0.68rem;
-  color: #dfd0b4;
+  color: #f0e6cf;
   font-family: var(--font-serif);
   white-space: nowrap;
 }
 
 .om-time-ap {
   font-size: 0.68rem;
-  color: #b5a487;
+  color: #c8dcd4;
   white-space: nowrap;
 }
 
 .om-time-ap b {
-  color: #ffd875;
+  color: #ffe082;
 }
 
 .om-festival-strip {
   margin-top: 0.2rem;
   padding-top: 0.2rem;
-  border-top: 0.06rem dashed #3d2e1b;
+  border-top: 0.06rem dashed rgba(206, 171, 95, 0.35);
   font-size: 0.7rem;
   color: #ffe699;
   display: flex;
@@ -311,12 +346,12 @@ body {
 .bar-wrap {
   flex: 1;
   height: 0.9rem;
-  background: #100d09;
-  border: 0.06rem solid #332515;
+  background: #142421;
+  border: 0.06rem solid #46665e;
   border-radius: 0.45rem;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0.1rem 0.25rem rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 0.08rem 0.2rem rgba(0, 0, 0, 0.55);
 }
 
 .bar-fill {
@@ -337,7 +372,7 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   color: #fff;
-  text-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.95);
+  text-shadow: 0 0.06rem 0.16rem rgba(0, 0, 0, 0.85);
   font-variant-numeric: tabular-nums;
 }
 
@@ -352,30 +387,36 @@ body {
 }
 
 .hour-label.h-morning {
-  background: rgba(240, 207, 122, 0.15);
+  background: rgba(240, 207, 122, 0.18);
   color: var(--hour-morning);
-  border: 0.06rem solid rgba(240, 207, 122, 0.35);
+  border: 0.06rem solid rgba(240, 207, 122, 0.42);
 }
 
 .hour-label.h-noon {
-  background: rgba(230, 154, 56, 0.15);
+  background: rgba(230, 154, 56, 0.18);
   color: var(--hour-noon);
-  border: 0.06rem solid rgba(230, 154, 56, 0.35);
+  border: 0.06rem solid rgba(230, 154, 56, 0.42);
 }
 
 .hour-label.h-night {
-  background: rgba(109, 174, 230, 0.15);
+  background: rgba(109, 174, 230, 0.18);
   color: var(--hour-night);
-  border: 0.06rem solid rgba(109, 174, 230, 0.35);
+  border: 0.06rem solid rgba(109, 174, 230, 0.42);
 }
 
 /* ========== 核心内容面板与主舞台容器 (.panel / .main-stage-panel) ========== */
 .panel {
-  background: var(--bg-panel);
+  background-color: var(--bg-panel);
+  background-image:
+    var(--xuan-fiber-pattern),
+    var(--xuan-tint-sheen),
+    linear-gradient(180deg, rgba(35, 60, 55, 0.78) 0%, rgba(25, 44, 40, 0.82) 100%);
+  backdrop-filter: blur(0.5rem) saturate(1.12);
+  -webkit-backdrop-filter: blur(0.5rem) saturate(1.12);
   border: 0.06rem solid var(--border-main);
   border-radius: var(--radius-lg);
   padding: 0.65rem 0.75rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), inset 0 0.05rem 0 rgba(255, 246, 220, 0.16);
   position: relative;
 }
 
@@ -415,11 +456,16 @@ body {
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #17130d;
-  border: 0.08rem solid #6b5331;
+  background-image:
+    var(--xuan-fiber-pattern),
+    var(--xuan-tint-sheen),
+    linear-gradient(180deg, rgba(34, 58, 53, 0.76) 0%, rgba(24, 42, 39, 0.80) 100%);
+  backdrop-filter: blur(0.5rem) saturate(1.15);
+  -webkit-backdrop-filter: blur(0.5rem) saturate(1.15);
+  border: 0.08rem solid #b59248;
   border-radius: var(--radius-lg);
   position: relative;
-  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.75);
+  box-shadow: 0 0.25rem 0.9rem rgba(8, 18, 16, 0.5), inset 0 0.06rem 0 rgba(255, 246, 220, 0.18);
 }
 
 /* ========== 底部常驻导航上方的半透明可展开修仙日志栏 ========== */
@@ -431,10 +477,10 @@ body {
 }
 
 .floating-log-bar {
-  background: rgba(16, 13, 9, 0.9);
+  background: rgba(27, 46, 42, 0.92);
   backdrop-filter: blur(0.25rem);
   -webkit-backdrop-filter: blur(0.25rem);
-  border: 0.06rem solid #594426;
+  border: 0.06rem solid #8c7238;
   border-radius: var(--radius-md);
   padding: 0.28rem 0.55rem;
   display: flex;
@@ -442,7 +488,7 @@ body {
   justify-content: space-between;
   gap: 0.4rem;
   cursor: pointer;
-  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0.15rem 0.45rem rgba(8, 18, 16, 0.45);
 }
 
 .floating-log-bar.minimized {
@@ -469,9 +515,9 @@ body {
   font-size: 0.66rem;
   padding: 0.05rem 0.3rem;
   border-radius: var(--radius-xs);
-  background: #3a2a16;
-  color: #f2cf7e;
-  border: 0.06rem solid #755830;
+  background: #304d47;
+  color: #ffe28a;
+  border: 0.06rem solid #9e8142;
   flex-shrink: 0;
 }
 
@@ -490,17 +536,17 @@ body {
   margin: 0 !important;
   font-size: 0.68rem !important;
   border-radius: var(--radius-xs);
-  background: #281e12;
-  color: #d8c298;
-  border: 0.06rem solid #5c4628;
+  background: #28423d;
+  color: #f0e2c4;
+  border: 0.06rem solid #8c7238;
 }
 
 .flog-more {
   font-size: 0.68rem;
-  color: #c7ab74;
+  color: #e2c88c;
 }
 
-/* ========== 底部常驻六大水墨圆章导航栏 (Flex/Grid 自适应，无遮挡) ========== */
+/* ========== 底部常驻六大温润宣纸/鎏金圆章导航栏 ========== */
 .tabs {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -511,15 +557,20 @@ body {
   flex-shrink: 0;
   position: relative;
   width: 100%;
-  background: linear-gradient(180deg, rgba(24, 19, 13, 0.98) 0%, rgba(12, 9, 6, 1) 100%);
-  border: 0.08rem solid #8c6d3b;
+  background-image:
+    var(--xuan-fiber-pattern),
+    var(--xuan-tint-sheen),
+    linear-gradient(180deg, rgba(36, 60, 55, 0.82) 0%, rgba(24, 41, 38, 0.86) 100%);
+  backdrop-filter: blur(0.45rem) saturate(1.15);
+  -webkit-backdrop-filter: blur(0.45rem) saturate(1.15);
+  border: 0.08rem solid #b8964c;
   border-radius: var(--radius-md);
   padding: 0.28rem 0.35rem;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.25rem;
   z-index: 50;
-  box-shadow: 0 -0.2rem 0.8rem rgba(0, 0, 0, 0.8);
+  box-shadow: 0 -0.15rem 0.65rem rgba(8, 18, 16, 0.46), inset 0 0.05rem 0 rgba(255, 245, 215, 0.2);
   margin: 0;
 }
 
@@ -541,9 +592,9 @@ body {
   width: clamp(2.35rem, 10.5vw, 2.85rem);
   height: clamp(2.35rem, 10.5vw, 2.85rem);
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #2b2319 0%, #14100b 75%, #0c0906 100%);
-  border: 0.11rem solid #7d6338;
-  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.75), inset 0 0 0.35rem rgba(212, 163, 71, 0.18);
+  background: radial-gradient(circle at 32% 28%, #fbf5e6 0%, #e6d7b8 68%, #c7b188 100%);
+  border: 0.11rem solid #6e5226;
+  box-shadow: 0 0.14rem 0.35rem rgba(8, 18, 16, 0.5), 0 0 0 0.06rem rgba(235, 202, 125, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -555,20 +606,21 @@ body {
   font-family: var(--font-serif);
   font-size: clamp(0.74rem, 2.8vw, 0.86rem);
   font-weight: 700;
-  color: #d8c6a4;
+  color: #261a0c;
   letter-spacing: 0.03rem;
-  text-shadow: 0 0.06rem 0.15rem rgba(0, 0, 0, 0.95);
+  text-shadow: 0 0.04rem 0 rgba(255, 255, 255, 0.55);
 }
 
 .seal-nav-btn.active .seal-nav-ring {
-  background: radial-gradient(circle at 35% 30%, #593e1c 0%, #2b1c0a 70%, #170e04 100%);
-  border-color: #ffdf8c;
-  box-shadow: 0 0 0.65rem rgba(242, 207, 126, 0.6), inset 0 0 0.5rem rgba(255, 224, 140, 0.3);
+  background: radial-gradient(circle at 35% 28%, #ba382c 0%, #8f2219 70%, #69140e 100%);
+  border-color: #ffe394;
+  box-shadow: 0 0 0.7rem rgba(242, 207, 126, 0.7), 0 0 0 0.08rem rgba(255, 228, 148, 0.55);
   transform: translateY(-0.12rem);
 }
 
 .seal-nav-btn.active .seal-nav-text {
-  color: #fff6d6;
+  color: #fff8e6;
+  text-shadow: 0 0.06rem 0.16rem rgba(0, 0, 0, 0.65);
 }
 
 .seal-nav-dot {
@@ -580,6 +632,19 @@ body {
   border-radius: 50%;
   background: #e64233;
   border: 0.08rem solid #fff2d6;
+}
+
+.seal-nav-btn.locked-seal-btn {
+  opacity: 0.52;
+  filter: grayscale(0.45);
+}
+
+.seal-nav-lock {
+  position: absolute;
+  top: -0.22rem;
+  right: -0.22rem;
+  font-size: 0.65rem;
+  line-height: 1;
 }
 
 /* ========== 全屏详细页面模式 (隐藏顶栏与底栏导航，100dvh 全屏展示) ========== */

@@ -11,6 +11,7 @@ const MIME_TYPES = {
   '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -47,13 +48,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  fs.stat(safePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      // If requested file doesn't exist, try index.html for SPA or return 404
+  fs.readFile(safePath, (err, content) => {
+    if (err) {
+      const ext = path.extname(safePath).toLowerCase();
+      // Only fall back to index.html for SPA navigation routes (no asset extension)
+      if (ext && ext !== '.html') {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('404 Not Found');
+        return;
+      }
       const indexPath = path.join(ROOT_DIR, 'index.html');
-      fs.readFile(indexPath, (readErr, content) => {
+      fs.readFile(indexPath, (readErr, indexContent) => {
         if (readErr) {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
           res.end('404 Not Found');
         } else {
           res.writeHead(200, {
@@ -63,7 +70,7 @@ const server = http.createServer((req, res) => {
           if (req.method === 'HEAD') {
             res.end();
           } else {
-            res.end(content);
+            res.end(indexContent);
           }
         }
       });
@@ -72,26 +79,25 @@ const server = http.createServer((req, res) => {
 
     const ext = path.extname(safePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const isSw = path.basename(safePath) === 'sw.js';
 
-    res.writeHead(200, {
+    const headers = {
       'Content-Type': contentType,
-      'Content-Length': stats.size,
-      'Cache-Control': 'no-cache',
-    });
+      'Content-Length': content.length,
+      'Cache-Control': isSw ? 'no-cache, no-store, must-revalidate' : 'no-cache',
+    };
+    if (isSw) {
+      headers['Service-Worker-Allowed'] = '/';
+    }
+
+    res.writeHead(200, headers);
 
     if (req.method === 'HEAD') {
       res.end();
       return;
     }
 
-    const stream = fs.createReadStream(safePath);
-    stream.on('error', () => {
-      if (!res.headersSent) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-      }
-      res.end('Internal Server Error');
-    });
-    stream.pipe(res);
+    res.end(content);
   });
 });
 

@@ -8,38 +8,43 @@
    无品级丹药（旧版残留，保留兼容）
    ============================================================ */
 Object.assign(ITEMS, {
-  "回血丹": { type: "pill", name: "回血丹", desc: "恢复 50% 气血", price: 20 },
-  "聚气丹": { type: "pill", name: "聚气丹", desc: "修炼 +50%，持续 3 天", price: 40 },
-  "静心丹": { type: "pill", name: "静心丹", desc: "心情平复", price: 30 },
-  "延寿丹": { type: "pill", name: "延寿丹", desc: "寿元 +50", price: 500 },
-  "解毒丹": { type: "pill", name: "解毒丹", desc: "解除中毒", price: 15 },
+  "回血丹": { id: "回血丹", type: "pill", name: "回血丹", grade: 1, tier: 1, usableIn: "field", effect: { type: "heal", value: 100 }, desc: "回复气血 +100", price: 20 },
+  "回灵丹": { id: "回灵丹", type: "pill", name: "回灵丹", grade: 1, tier: 1, usableIn: "field", effect: { type: "healMp", value: 100 }, desc: "回复灵力 +100", price: 20 },
+  "聚气丹": { id: "聚气丹", type: "pill", name: "聚气丹", grade: 1, tier: 1, usableIn: "field", effect: { type: "exp", value: 50 }, desc: "修为 +50", price: 40 },
+  "静心丹": { id: "静心丹", type: "pill", name: "静心丹", grade: 1, tier: 1, usableIn: "field", effect: { type: "mood", value: 1 }, desc: "平复心境（心境 +1）", price: 30 },
+  "延寿丹": { id: "延寿丹", type: "pill", name: "延寿丹", grade: 5, tier: 3, usableIn: "field", effect: { type: "age", value: 50 }, desc: "延年益寿（寿元上限 +50）", price: 500 },
+  "解毒丹": { id: "解毒丹", type: "pill", name: "解毒丹", grade: 1, tier: 1, usableIn: "field", effect: { type: "cure", status: "poison" }, desc: "解除中毒负面状态", price: 15 },
 
   /* ============================================================
      无品级材料（旧版残留）
      ============================================================ */
-  "灵草": { type: "mat", name: "灵草", desc: "炼丹材料", price: 5 },
-  "泉水": { type: "mat", name: "泉水", desc: "炼丹材料", price: 3 },
-  "妖丹": { type: "mat", name: "妖丹", desc: "妖兽内丹", price: 20 },
-  "寒泉": { type: "mat", name: "寒泉", desc: "炼丹材料", price: 10 },
-  "千年灵芝": { type: "mat", name: "千年灵芝", desc: "珍稀炼丹材料", price: 200 },
+  "灵草": { id: "灵草", type: "mat", name: "灵草", grade: 1, icon: "🌿", desc: "炼丹基础灵草材料", price: 5 },
+  "泉水": { id: "泉水", type: "mat", name: "泉水", grade: 1, icon: "💧", desc: "山涧清冽灵泉水", price: 3 },
+  "妖丹": { id: "妖丹", type: "mat", name: "妖丹", grade: 1, icon: "🔮", desc: "妖兽体内凝结内丹", price: 20 },
+  "寒泉": { id: "寒泉", type: "mat", name: "寒泉", grade: 2, icon: "💧", desc: "幽谷寒潭冰泉", price: 10 },
+  "千年灵芝": { id: "千年灵芝", type: "mat", name: "千年灵芝", grade: 3, icon: "🌿", desc: "珍稀千年灵药材", price: 200 },
 });
 
 /* ============================================================
    兽粮
    ============================================================ */
 Object.assign(ITEMS, {
-  "food_low":  { type: "food", name: "粗粮", hunger: 30,  price: 10,  desc: "回饥饿 +30" },
-  "food_mid":  { type: "food", name: "灵粮", hunger: 60,  price: 50,  desc: "回饥饿 +60" },
-  "food_high": { type: "food", name: "仙粮", hunger: 100, price: 200, desc: "回饥饿 +100" },
+  "food_low":  { id: "food_low",  type: "food", name: "粗粮", hunger: 30,  price: 10,  desc: "回饥饿 +30" },
+  "food_mid":  { id: "food_mid",  type: "food", name: "灵粮", hunger: 60,  price: 50,  desc: "回饥饿 +60" },
+  "food_high": { id: "food_high", type: "food", name: "仙粮", hunger: 100, price: 200, desc: "回饥饿 +100" },
 });
 
 /* ============================================================
    灵宠突破材料
    ============================================================ */
 Object.assign(ITEMS, {
-  "petBreak_1": { type: "petBreak", name: "灵兽丹·凡", realm: 1, price: 100,  desc: "灵宠突破炼气" },
-  "petBreak_2": { type: "petBreak", name: "灵兽丹·中", realm: 2, price: 500,  desc: "灵宠突破筑基" },
-  "petBreak_3": { type: "petBreak", name: "灵兽丹·上", realm: 3, price: 2000, desc: "灵宠突破金丹" },
+  "petBreak_1": { id: "petBreak_1", type: "petBreak", name: "灵兽丹·凡", realm: 1, price: 100,  desc: "灵宠突破炼气" },
+  "petBreak_2": { id: "petBreak_2", type: "petBreak", name: "灵兽丹·中", realm: 2, price: 500,  desc: "灵宠突破筑基" },
+  "petBreak_3": { id: "petBreak_3", type: "petBreak", name: "灵兽丹·上", realm: 3, price: 2000, desc: "灵宠突破金丹" },
+  "灵兽丹":     { id: "petBreak_1", type: "petBreak", name: "灵兽丹·凡", realm: 1, price: 100,  desc: "灵宠突破炼气" },
+  "灵兽丹·凡":  { id: "petBreak_1", type: "petBreak", name: "灵兽丹·凡", realm: 1, price: 100,  desc: "灵宠突破炼气" },
+  "灵兽丹·中":  { id: "petBreak_2", type: "petBreak", name: "灵兽丹·中", realm: 2, price: 500,  desc: "灵宠突破筑基" },
+  "灵兽丹·上":  { id: "petBreak_3", type: "petBreak", name: "灵兽丹·上", realm: 3, price: 2000, desc: "灵宠突破金丹" },
 });
 
 /* ============================================================
@@ -124,54 +129,98 @@ Object.assign(ITEMS, {
    装备
    ============================================================ */
 Object.assign(ITEMS, {
-  "e_sword1": { type: "equip", name: "青锋剑",   slot: "rightHand", atk: 5,  def: 0,  hp: 0,  mp: 0,  price: 100, desc: "凡铁锻造的长剑，剑锋初显锋芒（攻击+5）。" },
-  "e_sword2": { type: "equip", name: "玄铁重剑", slot: "rightHand", atk: 12, def: 2,  hp: 0,  mp: 0,  price: 500, desc: "深海寒铁熔炼的沉重阔剑，势大力沉（攻击+12，防御+2）。" },
-  "e_armor1": { type: "equip", name: "布衣",     slot: "body",      atk: 0,  def: 5,  hp: 20, mp: 0,  price: 100, desc: "凡间麻布粗衣，略具御寒防护（防御+5，气血+20）。" },
-  "e_armor2": { type: "equip", name: "皮甲",     slot: "body",      atk: 0,  def: 10, hp: 40, mp: 0,  price: 300, desc: "低阶妖兽坚韧毛皮鞣制软甲（防御+10，气血+40）。" },
-  "e_ring1":  { type: "equip", name: "聚灵戒",   slot: "accessory", atk: 0,  def: 0,  hp: 0,  mp: 20, price: 200, desc: "刻有聚灵微纹的戒指，温养丹田（灵力上限+20）。" },
-  "e_ring2":  { type: "equip", name: "护心镜",   slot: "accessory", atk: 0,  def: 3,  hp: 30, mp: 0,  price: 200, desc: "青铜护心宝镜，护卫胸口关键脉络（防御+3，气血+30）。" },
+  /* 开局执事赠予四式随身兵刃（1阶·1品） */
+  "e_sword1": { type: "equip", name: "青锋剑",   slot: "rightHand", tier: 1, grade: 1, atk: 5,  def: 0,  hp: 0,  mp: 0,  price: 100, desc: "凡铁锻造的一品长剑，剑锋初显锋芒（1阶1品 · 攻击+5）。" },
+  "e_blade1": { type: "equip", name: "精铁刀",   slot: "rightHand", tier: 1, grade: 1, atk: 5,  def: 0,  hp: 0,  mp: 0,  price: 100, desc: "百炼精铁铸就的一品厚背开山刀，劈砍势猛（1阶1品 · 攻击+5）。" },
+  "e_staff1": { type: "equip", name: "熟铜棍",   slot: "rightHand", tier: 1, grade: 1, atk: 5,  def: 0,  hp: 0,  mp: 0,  price: 100, desc: "沉甸甸的一品齐眉熟铜长棍，横扫千军（1阶1品 · 攻击+5）。" },
+  "e_whip1":  { type: "equip", name: "软皮鞭",   slot: "rightHand", tier: 1, grade: 1, atk: 5,  def: 0,  hp: 0,  mp: 0,  price: 100, desc: "韧牛筋混合蟒皮编织的一品长鞭，灵动刁钻（1阶1品 · 攻击+5）。" },
 
-  "e_sword_promotion": { type: "equip", name: "宗门制式剑", slot: "rightHand", atk: 15, def: 2,  hp: 0,  mp: 0,  price: 0, desc: "晋升门外弟子获赐的宗门精钢飞剑（攻击+15，防御+2）。" },
-  "e_robe_promotion":  { type: "equip", name: "宗门道袍",   slot: "body",      atk: 0,  def: 8,  hp: 30, mp: 0,  price: 0, desc: "门外弟子配发青云道袍，编织避尘法线（防御+8，气血+30）。" },
-  "e_sword_mennei":    { type: "equip", name: "精钢剑",     slot: "rightHand", atk: 25, def: 5,  hp: 0,  mp: 0,  price: 0, desc: "门内弟子配发精炼百辟宝剑（攻击+25，防御+5）。" },
-  "e_robe_mennei":     { type: "equip", name: "灵纹袍",     slot: "body",      atk: 0,  def: 15, hp: 50, mp: 10, price: 0, desc: "绣有护身灵纹的门内锦袍（防御+15，气血+50，灵力+10）。" },
-  "e_sword_zhenchuan": { type: "equip", name: "玄铁剑",     slot: "rightHand", atk: 40, def: 10, hp: 0,  mp: 0,  price: 0, desc: "真传弟子专属寒铁重剑，煞气逼人（攻击+40，防御+10）。" },
-  "e_robe_zhenchuan":  { type: "equip", name: "真传道袍",   slot: "body",      atk: 0,  def: 25, hp: 80, mp: 20, price: 0, desc: "紫绡金丝真传法衣，刀枪难侵（防御+25，气血+80，灵力+20）。" },
+  "e_sword2": { type: "equip", name: "玄铁重剑", slot: "rightHand", tier: 1, grade: 2, atk: 12, def: 2,  hp: 0,  mp: 0,  price: 500, desc: "深海寒铁熔炼的二品沉重阔剑，势大力沉（1阶2品 · 攻击+12，防御+2）。" },
+  "e_armor1": { type: "equip", name: "布衣",     slot: "body",      tier: 1, grade: 1, atk: 0,  def: 5,  hp: 20, mp: 0,  price: 100, desc: "凡间麻布粗衣，略具御寒防护（1阶1品 · 防御+5，气血+20）。" },
+  "e_armor2": { type: "equip", name: "皮甲",     slot: "body",      tier: 1, grade: 2, atk: 0,  def: 10, hp: 40, mp: 0,  price: 300, desc: "低阶妖兽坚韧毛皮鞣制二品软甲（1阶2品 · 防御+10，气血+40）。" },
+  "e_ring1":  { type: "equip", name: "聚灵戒",   slot: "accessory", tier: 1, grade: 2, atk: 0,  def: 0,  hp: 0,  mp: 20, price: 200, desc: "刻有聚灵微纹的二品戒指，温养丹田（1阶2品 · 灵力上限+20）。" },
+  "e_ring2":  { type: "equip", name: "护心镜",   slot: "accessory", tier: 1, grade: 2, atk: 0,  def: 3,  hp: 30, mp: 0,  price: 200, desc: "青铜护心宝镜，护卫胸口关键脉络（1阶2品 · 防御+3，气血+30）。" },
 
-  "shop_head1":   { type: "equip", name: "凡品头巾", slot: "head",      atk: 0,  def: 4,  hp: 15, mp: 0,  price: 30,  desc: "朴素布巾，定心安神（防御+4，气血+15）。" },
-  "shop_sword1":  { type: "equip", name: "凡品铁剑", slot: "rightHand", atk: 6,  def: 0,  hp: 0,  mp: 0,  price: 50,  desc: "城镇铁匠铺凡铁打造佩剑（攻击+6）。" },
-  "shop_shield1": { type: "equip", name: "凡品木盾", slot: "leftHand",  atk: 0,  def: 5,  hp: 10, mp: 0,  price: 40,  desc: "硬木包铁方盾，遮挡箭矢暗器（防御+5，气血+10）。" },
-  "shop_body1":   { type: "equip", name: "凡品布衣", slot: "body",      atk: 0,  def: 6,  hp: 20, mp: 0,  price: 60,  desc: "结实粗麻道衣，耐磨抗打（防御+6，气血+20）。" },
-  "shop_shoes1":  { type: "equip", name: "凡品草鞋", slot: "shoes",     atk: 0,  def: 2,  hp: 5,  mp: 0,  price: 25,  desc: "山林野麻编织行路草鞋，步履轻快（防御+2，气血+5）。" },
-  "shop_ring1":   { type: "equip", name: "凡品灵戒", slot: "accessory", atk: 0,  def: 0,  hp: 0,  mp: 10, price: 35,  desc: "微弱灵石嵌合的凡品戒指（灵力+10）。" },
-  "shop_ring2":   { type: "equip", name: "凡品护符", slot: "accessory", atk: 0,  def: 2,  hp: 15, mp: 0,  price: 35,  desc: "道观开光的平安护身锦囊（防御+2，气血+15）。" },
-  "shop_head2":   { type: "equip", name: "灵品头冠", slot: "head",      atk: 0,  def: 10, hp: 40, mp: 0,  price: 150, desc: "灵玉铸就的金丝头冠，增幅灵识防御（防御+10，气血+40）。" },
-  "shop_sword2":  { type: "equip", name: "灵品长剑", slot: "rightHand", atk: 18, def: 2,  hp: 0,  mp: 0,  price: 250, desc: "灵泉淬火铸剑，锋锐难当（攻击+18，防御+2）。" },
-  "shop_shield2": { type: "equip", name: "灵品盾",   slot: "leftHand",  atk: 0,  def: 12, hp: 30, mp: 0,  price: 180, desc: "玄铁与龟甲复合护盾，格挡坚不可摧（防御+12，气血+30）。" },
-  "shop_body2":   { type: "equip", name: "灵品道袍", slot: "body",      atk: 0,  def: 15, hp: 50, mp: 10, price: 300, desc: "真丝混织灵纹法袍，内蕴御风阵法（防御+15，气血+50，灵力+10）。" },
-  "shop_shoes2":  { type: "equip", name: "灵品靴",   slot: "shoes",     atk: 0,  def: 6,  hp: 20, mp: 0,  price: 120, desc: "踏云灵鹿皮缝制仙履，步履如踏飞燕（防御+6，气血+20）。" },
-  "shop_ring3":   { type: "equip", name: "灵品戒指", slot: "accessory", atk: 3,  def: 3,  hp: 20, mp: 20, price: 200, desc: "极品暖玉雕琢灵戒，攻守兼备（攻+3，防+3，血+20，蓝+20）。" },
-  "shop_ring4":   { type: "equip", name: "灵品项链", slot: "accessory", atk: 0,  def: 5,  hp: 30, mp: 30, price: 200, desc: "嵌合水月灵珠的护道项链，气血真元两相滋养（防+5，血+30，蓝+30）。" },
+  "e_sword_promotion": { type: "equip", name: "宗门制式剑", slot: "rightHand", tier: 1, grade: 2, atk: 15, def: 2,  hp: 0,  mp: 0,  price: 0, desc: "晋升门外弟子获赐的宗门二品精钢飞剑（1阶2品 · 攻击+15，防御+2）。" },
+  "e_robe_promotion":  { type: "equip", name: "宗门道袍",   slot: "body",      tier: 1, grade: 2, atk: 0,  def: 8,  hp: 30, mp: 0,  price: 0, desc: "门外弟子配发二品青云道袍，编织避尘法线（1阶2品 · 防御+8，气血+30）。" },
+  "e_sword_mennei":    { type: "equip", name: "精钢剑",     slot: "rightHand", tier: 2, grade: 3, atk: 25, def: 5,  hp: 0,  mp: 0,  price: 0, desc: "门内弟子配发三品精炼百辟宝剑（2阶3品 · 攻击+25，防御+5）。" },
+  "e_robe_mennei":     { type: "equip", name: "灵纹袍",     slot: "body",      tier: 2, grade: 3, atk: 0,  def: 15, hp: 50, mp: 10, price: 0, desc: "绣有护身灵纹的三品门内锦袍（2阶3品 · 防御+15，气血+50，灵力+10）。" },
+  "e_sword_zhenchuan": { type: "equip", name: "玄铁剑",     slot: "rightHand", tier: 2, grade: 4, atk: 40, def: 10, hp: 0,  mp: 0,  price: 0, desc: "真传弟子专属四品寒铁重剑，煞气逼人（2阶4品 · 攻击+40，防御+10）。" },
+  "e_robe_zhenchuan":  { type: "equip", name: "真传道袍",   slot: "body",      tier: 2, grade: 4, atk: 0,  def: 25, hp: 80, mp: 20, price: 0, desc: "紫绡金丝四品真传法衣，刀枪难侵（2阶4品 · 防御+25，气血+80，灵力+20）。" },
+
+  /* ===== 四大境界完整七件套装（兵器/左手/头/衣服/鞋/玉佩/法宝） ===== */
+  /* 1. 凡人境套装 · 凡铁护身套（Realm 0 / 1阶·1品） */
+  "fan_sword":    { type: "equip", name: "凡铁长剑",     slot: "rightHand", tier: 1, grade: 1, atk: 6,  def: 1,  hp: 0,   mp: 0,   price: 40,   desc: "【凡人套·兵器】山门铁匠千锤锻打的一品凡铁长剑（1阶1品 · 攻击+6，防御+1）。" },
+  "fan_shield":   { type: "equip", name: "轻木圆盾",     slot: "leftHand",  tier: 1, grade: 1, atk: 0,  def: 5,  hp: 15,  mp: 0,   price: 35,   desc: "【凡人套·左手】铁箍包边的一品轻便硬木圆盾（1阶1品 · 防御+5，气血+15）。" },
+  "fan_head":     { type: "equip", name: "粗麻护额",     slot: "head",      tier: 1, grade: 1, atk: 0,  def: 3,  hp: 15,  mp: 0,   price: 25,   desc: "【凡人套·头部】嵌有薄铜片的一品粗麻护额巾（1阶1品 · 防御+3，气血+15）。" },
+  "fan_body":     { type: "equip", name: "百衲粗布衣",   slot: "body",      tier: 1, grade: 1, atk: 0,  def: 6,  hp: 25,  mp: 0,   price: 45,   desc: "【凡人套·衣服】厚实耐磨的一品百衲行者布衣（1阶1品 · 防御+6，气血+25）。" },
+  "fan_shoes":    { type: "equip", name: "麻葛行军履",   slot: "shoes",     tier: 1, grade: 1, atk: 0,  def: 2,  hp: 10,  mp: 0,   price: 20,   desc: "【凡人套·鞋子】山藤与麻葛混编的一品轻便行履（1阶1品 · 防御+2，气血+10）。" },
+  "fan_pendant":  { type: "equip", name: "青瓷压胜玉佩", slot: "accessory", tier: 1, grade: 1, atk: 1,  def: 2,  hp: 15,  mp: 10,  price: 30,   desc: "【凡人套·玉佩】刻有平安符纹的一品青釉玉佩（1阶1品 · 攻+1，防+2，血+15，灵+10）。" },
+
+  /* 2. 炼气期套装 · 青云聚气套（Realm 1 / 1阶·2品） */
+  "lianqi_sword":   { type: "equip", name: "青云流光剑",   slot: "rightHand", tier: 1, grade: 2, atk: 16, def: 3,  hp: 0,   mp: 10,  price: 120,  desc: "【炼气套·兵器】寒铁混入赤铜铸就的二品灵剑，剑刃流转青芒（1阶2品 · 攻+16，防+3，灵+10）。" },
+  "lianqi_shield":  { type: "equip", name: "玄铁青光盾",   slot: "leftHand",  tier: 1, grade: 2, atk: 0,  def: 12, hp: 40,  mp: 0,   price: 100,  desc: "【炼气套·左手】玄铁熔铸的二品护身轻盾，刻有御气阵纹（1阶2品 · 防御+12，气血+40）。" },
+  "lianqi_head":    { type: "equip", name: "凝神白玉冠",   slot: "head",      tier: 1, grade: 2, atk: 0,  def: 8,  hp: 30,  mp: 20,  price: 80,   desc: "【炼气套·头部】温润白玉束发二品道冠，清心凝神（1阶2品 · 防御+8，气血+30，灵力+20）。" },
+  "lianqi_body":    { type: "equip", name: "青云避尘法袍", slot: "body",      tier: 1, grade: 2, atk: 0,  def: 16, hp: 60,  mp: 20,  price: 140,  desc: "【炼气套·衣服】灵蚕丝织就的二品避尘道袍，水火不侵（1阶2品 · 防御+16，气血+60，灵力+20）。" },
+  "lianqi_shoes":   { type: "equip", name: "踏青登云履",   slot: "shoes",     tier: 1, grade: 2, atk: 0,  def: 6,  hp: 25,  mp: 10,  price: 70,   desc: "【炼气套·鞋子】绘有轻身符文的二品登云法履（1阶2品 · 防御+6，气血+25，灵力+10）。" },
+  "lianqi_pendant": { type: "equip", name: "暖阳聚气玉佩", slot: "accessory", tier: 1, grade: 2, atk: 4,  def: 4,  hp: 35,  mp: 35,  price: 110,  desc: "【炼气套·玉佩】汲取地脉暖阳之气的二品灵玉佩（1阶2品 · 攻+4，防+4，血+35，灵+35）。" },
+
+  /* 3. 筑基期套装 · 太渊玄灵套（Realm 2 / 2阶·4品） */
+  "zhuji_sword":   { type: "equip", name: "寒渊碧影剑",   slot: "rightHand", tier: 2, grade: 4, atk: 38, def: 8,  hp: 0,   mp: 30,  price: 360,  desc: "【筑基套·兵器】秘银与深潭寒铁百炼四品灵剑，剑气森寒刺骨（2阶4品 · 攻+38，防+8，灵+30）。" },
+  "zhuji_shield":  { type: "equip", name: "两仪玄龟盾",   slot: "leftHand",  tier: 2, grade: 4, atk: 0,  def: 26, hp: 100, mp: 20,  price: 300,  desc: "【筑基套·左手】百年玄龟背甲嵌秘银炼制的四品重盾（2阶4品 · 防御+26，气血+100，灵力+20）。" },
+  "zhuji_head":    { type: "equip", name: "紫虚通玄冠",   slot: "head",      tier: 2, grade: 4, atk: 0,  def: 18, hp: 70,  mp: 50,  price: 240,  desc: "【筑基套·头部】紫金镶玉四品通玄宝冠，稳固筑基神识（2阶4品 · 防御+18，气血+70，灵力+50）。" },
+  "zhuji_body":    { type: "equip", name: "天蚕九耀道袍", slot: "body",      tier: 2, grade: 4, atk: 0,  def: 35, hp: 150, mp: 60,  price: 420,  desc: "【筑基套·衣服】冰山天蚕丝与秘银金线织就的四品九耀宝衣（2阶4品 · 防御+35，气血+150，灵力+60）。" },
+  "zhuji_shoes":   { type: "equip", name: "凌霄御风靴",   slot: "shoes",     tier: 2, grade: 4, atk: 0,  def: 14, hp: 60,  mp: 30,  price: 210,  desc: "【筑基套·鞋子】风属性妖兽皮炼制的四品御风战靴（2阶4品 · 防御+14，气血+60，灵力+30）。" },
+  "zhuji_pendant": { type: "equip", name: "九幽镇魂玉佩", slot: "accessory", tier: 2, grade: 4, atk: 10, def: 10, hp: 80,  mp: 80,  price: 320,  desc: "【筑基套·玉佩】万年寒玉雕琢的四品护魂双鱼佩（2阶4品 · 攻+10，防+10，血+80，灵+80）。" },
+
+  /* 4. 金丹期套装 · 真阳金丹套（Realm 3 / 3阶·6品） */
+  "jindan_sword":   { type: "equip", name: "九天真阳断岳剑", slot: "rightHand", tier: 3, grade: 6, atk: 85, def: 20, hp: 0,   mp: 80,  price: 900,  desc: "【金丹套·兵器】九天陨落天金引丹火淬炼之六品神剑，斩岳断江（3阶6品 · 攻+85，防+20，灵+80）。" },
+  "jindan_shield":  { type: "equip", name: "四象护道琉璃盾", slot: "leftHand",  tier: 3, grade: 6, atk: 0,  def: 58, hp: 260, mp: 60,  price: 750,  desc: "【金丹套·左手】四象神兽精血熔铸天金而成的六品琉璃宝盾（3阶6品 · 防御+58，气血+260，灵力+60）。" },
+  "jindan_head":    { type: "equip", name: "九霄万劫金阳冠", slot: "head",      tier: 3, grade: 6, atk: 0,  def: 40, hp: 180, mp: 120, price: 620,  desc: "【金丹套·头部】赤金与极品火玉炼制的六品金丹宝冠，万邪不侵（3阶6品 · 防御+40，气血+180，灵力+120）。" },
+  "jindan_body":    { type: "equip", name: "混元万象金光铠", slot: "body",      tier: 3, grade: 6, atk: 0,  def: 75, hp: 380, mp: 150, price: 1050, desc: "【金丹套·衣服】天金丝与蛟龙鳞片编织的六品护体金甲（3阶6品 · 防御+75，气血+380，灵力+150）。" },
+  "jindan_shoes":   { type: "equip", name: "万里缩地疾光靴", slot: "shoes",     tier: 3, grade: 6, atk: 0,  def: 30, hp: 150, mp: 80,  price: 550,  desc: "【金丹套·鞋子】铭刻缩地成寸阵纹的六品金丹灵靴（3阶6品 · 防御+30，气血+150，灵力+80）。" },
+  "jindan_pendant": { type: "equip", name: "太乙无极玄天玉佩",slot:"accessory", tier: 3, grade: 6, atk: 25, def: 25, hp: 200, mp: 200, price: 820,  desc: "【金丹套·玉佩】蕴含一丝天地造化之机的六品太乙神玉佩（3阶6品 · 攻+25，防+25，血+200，灵+200）。" },
+
+  "shop_head1":   { type: "equip", name: "凡品头巾", slot: "head",      tier: 1, grade: 1, atk: 0,  def: 4,  hp: 15, mp: 0,  price: 30,  desc: "朴素一品布巾，定心安神（1阶1品 · 防御+4，气血+15）。" },
+  "shop_sword1":  { type: "equip", name: "凡品铁剑", slot: "rightHand", tier: 1, grade: 1, atk: 6,  def: 0,  hp: 0,  mp: 0,  price: 50,  desc: "城镇铁匠铺凡铁打造的一品佩剑（1阶1品 · 攻击+6）。" },
+  "shop_shield1": { type: "equip", name: "凡品木盾", slot: "leftHand",  tier: 1, grade: 1, atk: 0,  def: 5,  hp: 10, mp: 0,  price: 40,  desc: "硬木包铁一品方盾，遮挡箭矢暗器（1阶1品 · 防御+5，气血+10）。" },
+  "shop_body1":   { type: "equip", name: "凡品布衣", slot: "body",      tier: 1, grade: 1, atk: 0,  def: 6,  hp: 20, mp: 0,  price: 60,  desc: "结实一品粗麻道衣，耐磨抗打（1阶1品 · 防御+6，气血+20）。" },
+  "shop_shoes1":  { type: "equip", name: "凡品草鞋", slot: "shoes",     tier: 1, grade: 1, atk: 0,  def: 2,  hp: 5,  mp: 0,  price: 25,  desc: "山林野麻编织一品行路草鞋，步履轻快（1阶1品 · 防御+2，气血+5）。" },
+  "shop_ring1":   { type: "equip", name: "凡品灵戒", slot: "accessory", tier: 1, grade: 1, atk: 0,  def: 0,  hp: 0,  mp: 10, price: 35,  desc: "微弱灵石嵌合的一品戒指（1阶1品 · 灵力+10）。" },
+  "shop_ring2":   { type: "equip", name: "凡品护符", slot: "accessory", tier: 1, grade: 1, atk: 0,  def: 2,  hp: 15, mp: 0,  price: 35,  desc: "道观开光的一品平安护身锦囊（1阶1品 · 防御+2，气血+15）。" },
+  "shop_head2":   { type: "equip", name: "灵品头冠", slot: "head",      tier: 2, grade: 3, atk: 0,  def: 10, hp: 40, mp: 0,  price: 150, desc: "灵玉铸就的三品金丝头冠，增幅灵识防御（2阶3品 · 防御+10，气血+40）。" },
+  "shop_sword2":  { type: "equip", name: "灵品长剑", slot: "rightHand", tier: 2, grade: 3, atk: 18, def: 2,  hp: 0,  mp: 0,  price: 250, desc: "灵泉淬火三品铸剑，锋锐难当（2阶3品 · 攻击+18，防御+2）。" },
+  "shop_shield2": { type: "equip", name: "灵品盾",   slot: "leftHand",  tier: 2, grade: 3, atk: 0,  def: 12, hp: 30, mp: 0,  price: 180, desc: "玄铁与龟甲复合三品护盾，格挡坚不可摧（2阶3品 · 防御+12，气血+30）。" },
+  "shop_body2":   { type: "equip", name: "灵品道袍", slot: "body",      tier: 2, grade: 3, atk: 0,  def: 15, hp: 50, mp: 10, price: 300, desc: "真丝混织三品灵纹法袍，内蕴御风阵法（2阶3品 · 防御+15，气血+50，灵力+10）。" },
+  "shop_shoes2":  { type: "equip", name: "灵品靴",   slot: "shoes",     tier: 2, grade: 3, atk: 0,  def: 6,  hp: 20, mp: 0,  price: 120, desc: "踏云灵鹿皮缝制三品仙履，步履如踏飞燕（2阶3品 · 防御+6，气血+20）。" },
+  "shop_ring3":   { type: "equip", name: "灵品戒指", slot: "accessory", tier: 2, grade: 3, atk: 3,  def: 3,  hp: 20, mp: 20, price: 200, desc: "极品暖玉雕琢三品灵戒，攻守兼备（2阶3品 · 攻+3，防+3，血+20，蓝+20）。" },
+  "shop_ring4":   { type: "equip", name: "灵品项链", slot: "accessory", tier: 2, grade: 3, atk: 0,  def: 5,  hp: 30, mp: 30, price: 200, desc: "嵌合水月灵珠的三品护道项链，气血真元两相滋养（2阶3品 · 防+5，血+30，蓝+30）。" },
 });
 
 /* ============================================================
    法宝
    ============================================================ */
 Object.assign(ITEMS, {
-  "huo_fu":   { type: "artifact", name: "火灵符", slot: "artifact", element: "huo",  atk: 5, spellBonus: 0.10, price: 300, desc: "【火系法宝】朱雀真火灵符，增强火行术法威力 10%，攻击+5。" },
-  "jin_ling": { type: "artifact", name: "金铃",   slot: "artifact", element: "jin",  atk: 4, spellBonus: 0.10, price: 300, desc: "【金系法宝】太乙金精铃铛，增强金行术法威力 10%，攻击+4。" },
-  "mu_teng":  { type: "artifact", name: "木藤环", slot: "artifact", element: "mu",   atk: 3, spellBonus: 0.10, price: 300, desc: "【木系法宝】千岁青藤宝环，增强木行生机术法 10%，攻击+3。" },
-  "shui_zhu": { type: "artifact", name: "水灵珠", slot: "artifact", element: "shui", atk: 4, spellBonus: 0.10, price: 300, desc: "【水系法宝】北海碧海沧珠，增强水行法术威力 10%，攻击+4。" },
-  "tu_yin":   { type: "artifact", name: "土印",   slot: "artifact", element: "tu",   atk: 5, spellBonus: 0.10, price: 300, desc: "【土系法宝】大地戊土玄印，增强土行法术威力 10%，攻击+5。" },
-  "lei_zhu":  { type: "artifact", name: "雷珠",   slot: "artifact", element: "lei",  atk: 6, spellBonus: 0.10, price: 300, desc: "【雷系法宝】九天神霄雷珠，增强雷行法术威力 10%，攻击+6。" },
-  "bing_jing":{ type: "artifact", name: "冰晶",   slot: "artifact", element: "bing", atk: 5, spellBonus: 0.10, price: 300, desc: "【冰系法宝】极北万年玄冰晶，增强冰霜法术威力 10%，攻击+5。" },
+  /* 四大境界套装专属法宝 */
+  "fan_artifact":    { type: "artifact", name: "桃木辟邪镜",       slot: "artifact", tier: 1, grade: 1, element: "mu",   atk: 3,  def: 2,  spellBonus: 0.05, price: 60,   desc: "【凡人套·法宝】百年桃木芯雕刻的一品辟邪八卦镜，法术威力+5%，攻击+3，防御+2。" },
+  "lianqi_artifact": { type: "artifact", name: "六合八卦盘",       slot: "artifact", tier: 1, grade: 2, element: "jin",  atk: 7,  def: 4,  spellBonus: 0.10, price: 180,  desc: "【炼气套·法宝】赤铜与寒铁精铸的二品子午八卦盘，法术威力+10%，攻击+7，防御+4。" },
+  "zhuji_artifact":  { type: "artifact", name: "阴阳太极流光镜",   slot: "artifact", tier: 2, grade: 4, element: "shui", atk: 16, def: 10, spellBonus: 0.16, price: 500,  desc: "【筑基套·法宝】秘银镶嵌阴阳二气宝玉的四品流光古镜，法术威力+16%，攻击+16，防御+10。" },
+  "jindan_artifact": { type: "artifact", name: "太虚混元镇天印",   slot: "artifact", tier: 3, grade: 6, element: "huo",  atk: 36, def: 22, spellBonus: 0.25, price: 1200, desc: "【金丹套·法宝】天金混合天外神晶炼制的六品镇天宝印，法术威力+25%，攻击+36，防御+22。" },
 
-  "shop_art_huo":  { type: "artifact", name: "凡品火符", slot: "artifact", element: "huo",  atk: 3, spellBonus: 0.05, price: 120, desc: "初阶火灵符纸，法术威力+5%，攻击+3。" },
-  "shop_art_jin":  { type: "artifact", name: "凡品金铃", slot: "artifact", element: "jin",  atk: 3, spellBonus: 0.05, price: 120, desc: "黄铜金丝铃铛，金系法术威力+5%，攻击+3。" },
-  "shop_art_mu":   { type: "artifact", name: "凡品木环", slot: "artifact", element: "mu",   atk: 2, spellBonus: 0.05, price: 120, desc: "灵木雕琢环佩，木系法术威力+5%，攻击+2。" },
-  "shop_art_shui": { type: "artifact", name: "灵品水珠", slot: "artifact", element: "shui", atk: 6, spellBonus: 0.12, price: 500, desc: "深潭寒月水珠，水系法术威力+12%，攻击+6。" },
-  "shop_art_lei":  { type: "artifact", name: "灵品雷珠", slot: "artifact", element: "lei",  atk: 7, spellBonus: 0.12, price: 500, desc: "雷击桃木芯淬炼雷珠，雷系法术威力+12%，攻击+7。" },
-  "shop_art_bing": { type: "artifact", name: "灵品冰晶", slot: "artifact", element: "bing", atk: 6, spellBonus: 0.12, price: 500, desc: "雪山寒髓冰晶，冰系法术威力+12%，攻击+6。" },
+  "huo_fu":   { type: "artifact", name: "火灵符", slot: "artifact", tier: 2, grade: 3, element: "huo",  atk: 5, spellBonus: 0.10, price: 300, desc: "【火系法宝】三品朱雀真火灵符，增强火行术法威力 10%，攻击+5。" },
+  "jin_ling": { type: "artifact", name: "金铃",   slot: "artifact", tier: 2, grade: 3, element: "jin",  atk: 4, spellBonus: 0.10, price: 300, desc: "【金系法宝】三品太乙金精铃铛，增强金行术法威力 10%，攻击+4。" },
+  "mu_teng":  { type: "artifact", name: "木藤环", slot: "artifact", tier: 2, grade: 3, element: "mu",   atk: 3, spellBonus: 0.10, price: 300, desc: "【木系法宝】三品千岁青藤宝环，增强木行生机术法 10%，攻击+3。" },
+  "shui_zhu": { type: "artifact", name: "水灵珠", slot: "artifact", tier: 2, grade: 3, element: "shui", atk: 4, spellBonus: 0.10, price: 300, desc: "【水系法宝】三品北海碧海沧珠，增强水行法术威力 10%，攻击+4。" },
+  "tu_yin":   { type: "artifact", name: "土印",   slot: "artifact", tier: 2, grade: 3, element: "tu",   atk: 5, spellBonus: 0.10, price: 300, desc: "【土系法宝】三品大地戊土玄印，增强土行法术威力 10%，攻击+5。" },
+  "lei_zhu":  { type: "artifact", name: "雷珠",   slot: "artifact", tier: 2, grade: 3, element: "lei",  atk: 6, spellBonus: 0.10, price: 300, desc: "【雷系法宝】三品九天神霄雷珠，增强雷行法术威力 10%，攻击+6。" },
+  "bing_jing":{ type: "artifact", name: "冰晶",   slot: "artifact", tier: 2, grade: 3, element: "bing", atk: 5, spellBonus: 0.10, price: 300, desc: "【冰系法宝】三品极北万年玄冰晶，增强冰霜法术威力 10%，攻击+5。" },
+
+  "shop_art_huo":  { type: "artifact", name: "凡品火符", slot: "artifact", tier: 1, grade: 1, element: "huo",  atk: 3, spellBonus: 0.05, price: 120, desc: "一品初阶火灵符纸，法术威力+5%，攻击+3。" },
+  "shop_art_jin":  { type: "artifact", name: "凡品金铃", slot: "artifact", tier: 1, grade: 1, element: "jin",  atk: 3, spellBonus: 0.05, price: 120, desc: "一品黄铜金丝铃铛，金系法术威力+5%，攻击+3。" },
+  "shop_art_mu":   { type: "artifact", name: "凡品木环", slot: "artifact", tier: 1, grade: 1, element: "mu",   atk: 2, spellBonus: 0.05, price: 120, desc: "一品灵木雕琢环佩，木系法术威力+5%，攻击+2。" },
+  "shop_art_shui": { type: "artifact", name: "灵品水珠", slot: "artifact", tier: 2, grade: 3, element: "shui", atk: 6, spellBonus: 0.12, price: 500, desc: "三品深潭寒月水珠，水系法术威力+12%，攻击+6。" },
+  "shop_art_lei":  { type: "artifact", name: "灵品雷珠", slot: "artifact", tier: 2, grade: 3, element: "lei",  atk: 7, spellBonus: 0.12, price: 500, desc: "三品雷击桃木芯淬炼雷珠，雷系法术威力+12%，攻击+7。" },
+  "shop_art_bing": { type: "artifact", name: "灵品冰晶", slot: "artifact", tier: 2, grade: 3, element: "bing", atk: 6, spellBonus: 0.12, price: 500, desc: "三品雪山寒髓冰晶，冰系法术威力+12%，攻击+6。" },
 });
 
 /* ============================================================
@@ -222,6 +271,6 @@ Object.assign(ITEMS, {
   "jianzhong_heart_f2":{type: "heartFragment", name: "剑冢剑典·下卷", artId: "jianzhong_heart",start: 4, end: 5, price: 500, desc: "【古剑通玄秘典】万剑冢《剑冢剑典》（筑基期古剑修）。参悟可解锁第 4~5 重万剑归宗剑煞。" },
 
   /* 主线专属法宝与神兵（最高至金丹初期） */
-  "e_taiyuan_sword": { type: "equip", name: "太渊镇魔剑", slot: "rightHand", atk: 58, def: 15, hp: 120, mp: 45, price: 2000, desc: "太渊古陵出土的金丹初期神兵，剑锋蕴藏浩然星辉（攻击+58，防御+15，气血+120，灵力+45）。" },
-  "e_taiyuan_jade":  { type: "artifact", name: "太渊护道玉", slot: "artifact", element: "jin", atk: 25, spellBonus: 0.20, price: 1500, desc: "太渊道玉共鸣凝结的护道法宝，法术威力+20%，攻击+25。" },
+  "e_taiyuan_sword": { type: "equip", name: "太渊镇魔剑", slot: "rightHand", tier: 3, grade: 6, atk: 58, def: 15, hp: 120, mp: 45, price: 2000, desc: "太渊古陵出土的六品金丹神兵，剑锋蕴藏浩然星辉（3阶6品 · 攻击+58，防御+15，气血+120，灵力+45）。" },
+  "e_taiyuan_jade":  { type: "artifact", name: "太渊护道玉", slot: "artifact", tier: 3, grade: 6, element: "jin", atk: 25, spellBonus: 0.20, price: 1500, desc: "太渊道玉共鸣凝结的六品护道法宝（3阶6品 · 法术威力+20%，攻击+25）。" },
 });

@@ -7,10 +7,23 @@
 <meta name="description" content="文字修仙RPG角色扮演模拟器，开辟道途，修习心法法术，炼丹历练，探索宗门与机缘冒险。">
 <meta property="og:title" content="修仙人生">
 <meta property="og:description" content="文字修仙RPG角色扮演模拟器，开辟道途，修习心法法术，炼丹历练，探索宗门与机缘冒险。">
+
+<!-- PWA Manifest & Web App Capabilities -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#182b26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="修仙人生">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+
 <link rel="stylesheet" href="css/reset.css?v=6">
-<link rel="stylesheet" href="css/theme.css?v=6">
-<link rel="stylesheet" href="css/layout.css?v=6">
-<link rel="stylesheet" href="css/components.css?v=6">
+<link rel="stylesheet" href="css/theme.css?v=8">
+<link rel="stylesheet" href="css/layout.css?v=8">
+<link rel="stylesheet" href="css/components.css?v=25">
 </head>
 <body>
 <div id="app">
@@ -25,18 +38,17 @@
         <span class="badge" id="logBadge">0</span>
       </div>
       <div class="audio-widget" id="audioWidget">
-        <div class="icon-btn audio-btn muted" id="audioBtn" onclick="onAudioBtnClick(event)" title="仙乐控制 (点击播放/静音，点齿轮调音量)">
+        <div class="icon-btn audio-btn muted" id="audioBtn" onclick="onAudioBtnClick(event)" title="背景仙乐 (点击静音/播放)">
           <span id="audioIcon">🔇</span>
-          <span class="audio-gear" onclick="openAudioSettings(event)" title="调音量/换曲风">⚙</span>
+          <span class="audio-gear" onclick="openAudioSettings(event)" title="调音量">⚙</span>
         </div>
         <div class="audio-popover" id="audioPopover" style="display:none;">
           <div class="popover-header">
-            <span class="popover-title">仙音渺渺 · 背景仙乐</span>
+            <span class="popover-title">🎵 仙乐调节</span>
             <button class="popover-close" id="audioPopoverClose" onclick="openAudioSettings(event, false)" title="关闭">✕</button>
           </div>
           <div class="popover-body">
             <div class="audio-row">
-              <span class="label">状态:</span>
               <button class="btn-toggle-play inactive" id="btnAudioTogglePlay" onclick="toggleAudio()">
                 静音中 (点击播放)
               </button>
@@ -47,18 +59,20 @@
               <span class="volume-num" id="audioVolumeNum">60%</span>
             </div>
             <div class="theme-select-section">
-              <div class="section-subtitle">曲风意境</div>
               <div class="theme-pills">
-                <button class="theme-pill active" data-theme="fairy" onclick="onAudioThemeClick('fairy')">清幽雅韵</button>
-                <button class="theme-pill" data-theme="guqin" onclick="onAudioThemeClick('guqin')">云水抚琴</button>
-                <button class="theme-pill" data-theme="zen" onclick="onAudioThemeClick('zen')">九霄入定</button>
+                <button class="theme-pill active" data-theme="fairy" onclick="onAudioThemeClick('fairy')">清幽</button>
+                <button class="theme-pill" data-theme="guqin" onclick="onAudioThemeClick('guqin')">古琴</button>
+                <button class="theme-pill" data-theme="zen" onclick="onAudioThemeClick('zen')">入定</button>
               </div>
-              <div class="theme-desc" id="audioThemeDesc">古筝与竹笛交织，如穿行于仙山翠竹之间</div>
             </div>
           </div>
         </div>
       </div>
       <div class="icon-btn" id="adminIcon" onclick="openAdmin()" title="数据维护">🔧</div>
+      <div class="icon-btn pwa-install-btn" id="pwaInstallBtn" onclick="handlePwaInstallClick()" title="安装《修仙人生》至桌面或手机主屏">
+        <span>📲</span>
+        <span class="pwa-install-tag">安装</span>
+      </div>
       <div class="icon-btn" id="profileIcon" onclick="switchTab('profile')" title="道体人物">道</div>
     </div>
   </div>
@@ -124,7 +138,13 @@
 <div id="adventureScreen" class="adventure-screen" style="display:none;">
   <div class="adventure-header">
     <h1 id="advTitle">🌲 冒险地</h1>
-    <div class="sub" id="advSub">第 1 层</div>
+    <button type="button" class="adv-exit-icon-btn" onclick="onAdvLeave()" title="中途撤离历练" aria-label="中途撤离历练">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
   </div>
 
   <div class="path-bar" id="advPathBar"></div>
@@ -134,12 +154,8 @@
   </div>
 
   <div class="choice-area">
-    <div class="choice-title">下一步</div>
+    <div class="choice-title">择路前行</div>
     <div class="choice-list" id="advChoiceList"></div>
-  </div>
-
-  <div class="adv-footer">
-    <button onclick="onAdvLeave()" class="adv-leave-btn">离开冒险地</button>
   </div>
 </div>
 
@@ -150,6 +166,7 @@
     <h1 id="secretTitle">📜 秘境</h1>
     <div class="progress" id="secretSub"></div>
   </div>
+  <div class="secret-hud-bar" id="secretHudBar"></div>
   <div class="story-area">
     <div class="story-card" id="secretCard"></div>
   </div>
@@ -163,97 +180,101 @@
 <div id="adminScreen" class="admin-screen" style="display:none;"></div>
 
 <!-- ========== 数据层 ========== -->
-<script src="js/data/constants.js"></script>
-<script src="js/data/items/00-registry.js"></script>
-<script src="js/data/items/10-base.js"></script>
-<script src="js/data/items/20-heaven-defying.js"></script>
-<script src="js/data/items/30-generate.js"></script>
-<script src="js/data/daily-tasks.js"></script>
+<script src="js/data/constants.js?v=14"></script>
+<script src="js/data/items/00-registry.js?v=14"></script>
+<script src="js/data/items/10-base.js?v=14"></script>
+<script src="js/data/items/20-heaven-defying.js?v=14"></script>
+<script src="js/data/items/30-generate.js?v=14"></script>
+<script src="js/data/daily-tasks.js?v=10"></script>
 <script src="js/data/rank-boards.js"></script>
 <script src="js/data/market.js"></script>
-<script src="js/data/forge-affixes.js"></script>
-<script src="js/data/forge-recipes.js"></script>
+<script src="js/data/forge-affixes.js?v=7"></script>
+<script src="js/data/forge-recipes.js?v=13"></script>
 <script src="js/data/custom-pack.js"></script>
-<script src="js/data/shops.js"></script>
+<script src="js/data/shops.js?v=13"></script>
 <script src="js/data/heaven-defying.js"></script>
 <script src="js/data/realms.js"></script>
 <script src="js/data/sects.js"></script>
 <script src="js/data/heart-arts.js"></script>
 <script src="js/data/spells.js"></script>
 <script src="js/data/skills.js"></script>
-<script src="js/data/chores.js"></script>
+<script src="js/data/chores.js?v=7"></script>
 <script src="js/data/hobbies.js"></script>
 <script src="js/data/recipes.js"></script>
 <script src="js/data/dialogues.js"></script>
-<script src="js/data/formulas.js"></script>
+<script src="js/data/formulas.js?v=12"></script>
 <script src="js/data/combat-skills.js"></script>
-<script src="js/data/fight-enemies.js"></script>
+<script src="js/data/fight-enemies.js?v=10"></script>
 <script src="js/data/resistances.js"></script>
 <script src="js/data/status-effects.js"></script>
-<script src="js/data/pets.js"></script>
-<script src="js/data/adventure-zones.js"></script>
-<script src="js/data/secret-events.js"></script>
-<script src="js/data/forge-materials.js"></script>   <!-- 确认这行存在 -->
+<script src="js/data/pets.js?v=8"></script>
+<script src="js/data/adventure-zones.js?v=2"></script>
+<script src="js/data/secret-events.js?v=2"></script>
+<script src="js/data/forge-materials.js?v=14"></script>
 <script src="js/data/story-chapters.js"></script>
-<script src="js/data/items/99-buckets.js"></script>
+<script src="js/data/items/99-buckets.js?v=14"></script>
 
 
 <!-- ========== 核心层 ========== -->
-<script src="js/core/state.js"></script>
-<script src="js/core/utils.js"></script>
-<script src="js/core/date.js"></script>
+<script src="js/core/state.js?v=14"></script>
+<script src="js/core/utils.js?v=14"></script>
+<script src="js/core/date.js?v=7"></script>
 <script src="js/core/log.js"></script>
 <script src="js/core/modal.js"></script>
 <script src="js/core/save.js"></script>
-<script src="js/core/migrate.js"></script>
+<script src="js/core/migrate.js?v=16"></script>
 <script src="js/core/audio.js"></script>
+<script src="js/core/pwa.js?v=1"></script>
 
 <!-- ========== 系统层 ========== -->
 <script src="js/systems/npc.js"></script>
-<script src="js/systems/character.js"></script>
+<script src="js/systems/character.js?v=17"></script>
 <script src="js/systems/heart-arts.js"></script>
 <script src="js/systems/spells.js"></script>
-<script src="js/systems/cultivate.js"></script>
-<script src="js/systems/alchemy.js"></script>
+<script src="js/systems/cultivate.js?v=8"></script>
+<script src="js/systems/alchemy.js?v=7"></script>
 <script src="js/systems/heaven-defying.js"></script>
 <script src="js/systems/chores.js"></script>
 <script src="js/systems/social.js"></script>
-<script src="js/systems/sect.js"></script>
+<script src="js/systems/sect.js?v=15"></script>
 <script src="js/systems/story.js"></script>
 <script src="js/systems/ending.js"></script>
 <script src="js/systems/fight.js"></script>
-<script src="js/systems/battle.js"></script>
+<script src="js/systems/battle.js?v=21"></script>
 <script src="js/systems/status.js"></script>
-<script src="js/systems/pets.js"></script>
-<script src="js/systems/forge.js"></script>
+<script src="js/systems/pets.js?v=18"></script>
+<script src="js/systems/forge.js?v=17"></script>
 <script src="js/systems/task.js"></script>
+<script src="js/systems/daily-tasks.js"></script>
 <script src="js/systems/rank-board.js"></script>
 <script src="js/systems/admin.js"></script>
-<script src="js/systems/market.js"></script>
+<script src="js/systems/market.js?v=14"></script>
 <script src="js/systems/seclusion.js"></script>
 <script src="js/systems/competition.js"></script>
-<script src="js/systems/adventure.js"></script>
-<script src="js/systems/secret-realm.js"></script>
+<script src="js/systems/adventure.js?v=3"></script>
+<script src="js/systems/secret-realm.js?v=2"></script>
+<script src="js/systems/sect-chronicles.js?v=1"></script>
 
 
 <!-- ========== UI 层 ========== -->
 <script src="js/ui/story.js"></script>
 <script src="js/ui/status.js"></script>
-<script src="js/ui/day.js"></script>
-<script src="js/ui/cultivate.js"></script>
+<script src="js/ui/day.js?v=8"></script>
+<script src="js/ui/cultivate.js?v=4"></script>
 <script src="js/ui/social.js"></script>
-<script src="js/ui/sect.js"></script>
-<script src="js/ui/profile.js"></script>
-<script src="js/ui/render.js"></script>
-<script src="js/ui/battle.js"></script>
-<script src="js/ui/cave.js"></script>
-<script src="js/ui/adventure.js"></script>
-<script src="js/ui/secret-realm.js"></script>
+<script src="js/ui/sect.js?v=16"></script>
+<script src="js/ui/profile.js?v=18"></script>
+<script src="js/ui/render.js?v=16"></script>
+<script src="js/ui/battle.js?v=19"></script>
+<script src="js/ui/cave.js?v=20"></script>
+<script src="js/ui/adventure.js?v=3"></script>
+<script src="js/ui/secret-realm.js?v=3"></script>
 <script src="js/ui/rank-board.js"></script>
+<script src="js/ui/sect-chronicles.js?v=1"></script>
 <script src="js/ui/admin.js"></script>
 
 
 <!-- ========== 启动 ========== -->
-<script src="js/main.js"></script>
+<script src="js/main.js?v=7"></script>
 </body>
 </html>

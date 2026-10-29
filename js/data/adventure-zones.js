@@ -21,7 +21,7 @@ const ADVENTURE_ZONES = [
         finalCount: 2,
         escapeRate: 0.55,
         enemies: [
-          "e_wolf", "e_cloud_spider", "e_rabbit_spirit", "e_white_snake_tiny",
+          "e_wolf", "e_white_fox", "e_cloud_spider", "e_rabbit_spirit", "e_white_snake_tiny",
           "e_sparrow_spirit", "e_pangolin_tiny", "e_fox_tiny", "e_toad_tiny",
           "e_butterfly_tiny", "e_hedgehog_tiny", "e_bandit_scout", "e_wild_cultivator"
         ],

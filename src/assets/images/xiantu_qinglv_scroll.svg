@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- 温润宣纸底色与青绿天光渐变 -->
+    <linearGradient id="skyWash" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d3834"/>
+      <stop offset="28%" stop-color="#294e47"/>
+      <stop offset="52%" stop-color="#3c6252"/>
+      <stop offset="76%" stop-color="#274744"/>
+      <stop offset="100%" stop-color="#1a3036"/>
+    </linearGradient>
+
+    <!-- 中央道心金霞天光 -->
+    <radialGradient id="daoSunGlow" cx="50%" cy="32%" r="44%">
+      <stop offset="0%" stop-color="#fff3cc" stop-opacity="0.72"/>
+      <stop offset="28%" stop-color="#f3c96b" stop-opacity="0.42"/>
+      <stop offset="62%" stop-color="#69b89e" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1d3834" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 右侧古陵金丹紫金霞光 -->
+    <radialGradient id="jindanGlow" cx="84%" cy="26%" r="32%">
+      <stop offset="0%" stop-color="#ffe49e" stop-opacity="0.52"/>
+      <stop offset="45%" stop-color="#9b7ede" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#1a3036" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 千里江山·石青石绿山体渐变 -->
+    <linearGradient id="mtDistant" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#568f84" stop-opacity="0.65"/>
+      <stop offset="60%" stop-color="#2f5750" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#1c3531" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <linearGradient id="mtQinglvMid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#78c2a4"/>
+      <stop offset="22%" stop-color="#3d8775"/>
+      <stop offset="65%" stop-color="#224d45"/>
+      <stop offset="100%" stop-color="#152b28"/>
+    </linearGradient>
+
+    <linearGradient id="mtAzurite" x1="0%" y1="0%" x2="15%" y2="100%">
+      <stop offset="0%" stop-color="#e8c67a"/>
+      <stop offset="8%" stop-color="#4ea894"/>
+      <stop offset="42%" stop-color="#27635c"/>
+      <stop offset="85%" stop-color="#173835"/>
+      <stop offset="100%" stop-color="#102422"/>
+    </linearGradient>
+
+    <linearGradient id="mtFore" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5ca388"/>
+      <stop offset="35%" stop-color="#28594e"/>
+      <stop offset="100%" stop-color="#122724"/>
+    </linearGradient>
+
+    <!-- 云海流霞渐变 -->
+    <linearGradient id="cloudMist" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbf3df" stop-opacity="0.46"/>
+      <stop offset="50%" stop-color="#d8ebe2" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#1c3430" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 金线勾勒笔触 -->
+    <linearGradient id="goldOutline" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ebd08e" stop-opacity="0.45"/>
+      <stop offset="50%" stop-color="#fff0be" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="#d4a855" stop-opacity="0.45"/>
+    </linearGradient>
+
+    <!-- 宣纸帘纹图案 -->
+    <pattern id="xuanPaperLines" width="40" height="40" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="8" x2="40" y2="8" stroke="#fff6e0" stroke-opacity="0.035" stroke-width="1"/>
+      <line x1="0" y1="20" x2="40" y2="20" stroke="#fff6e0" stroke-opacity="0.025" stroke-width="1"/>
+      <line x1="0" y1="32" x2="40" y2="32" stroke="#fff6e0" stroke-opacity="0.035" stroke-width="1"/>
+      <circle cx="12" cy="14" r="0.8" fill="#ffe28a" fill-opacity="0.16"/>
+      <circle cx="31" cy="27" r="1.1" fill="#ffe28a" fill-opacity="0.12"/>
+    </pattern>
+  </defs>
+
+  <!-- 1. 底色与宣纸肌理 -->
+  <rect width="1800" height="800" fill="url(#skyWash)"/>
+  <rect width="1800" height="800" fill="url(#daoSunGlow)"/>
+  <rect width="1800" height="800" fill="url(#jindanGlow)"/>
+  <rect width="1800" height="800" fill="url(#xuanPaperLines)"/>
+
+  <!-- 2. 天际金轮与星宿瑞气 -->
+  <circle cx="900" cy="230" r="105" fill="#ffefc2" fill-opacity="0.22"/>
+  <circle cx="900" cy="230" r="68" fill="#fff7dc" fill-opacity="0.34"/>
+  <circle cx="1510" cy="185" r="46" fill="#ffe6a3" fill-opacity="0.22"/>
+
+  <!-- 3. 远景淡青黛群峰 (横贯三卷) -->
+  <path d="M0,480 L75,380 L145,420 L230,290 L315,390 L410,270 L495,365 L590,235 L685,345 L790,195 L895,310 L995,175 L1095,315 L1205,215 L1315,340 L1420,180 L1535,305 L1645,220 L1735,330 L1800,275 L1800,800 L0,800 Z"
+        fill="url(#mtDistant)"/>
+
+  <!-- 4. 中远景青绿主峰群 (左：初途引气峰 / 中：太源道心峰 / 右：古陵金丹峰) -->
+  <path d="M-20,560 L60,410 L130,455 L215,275 L295,390 L365,330 L450,460 L540,340 L635,445 L745,245 L830,345 L905,145 L985,335 L1065,240 L1165,435 L1265,295 L1355,395 L1465,195 L1555,355 L1635,255 L1725,415 L1820,340 L1820,800 L-20,800 Z"
+        fill="url(#mtQinglvMid)" stroke="url(#goldOutline)" stroke-width="1.6"/>
+
+  <!-- 山脊鎏金皴法线条 -->
+  <path d="M215,275 L240,380 M215,275 L180,395 M745,245 L770,385 M905,145 L900,360 M905,145 L860,310 M905,145 L950,320 M1465,195 L1440,370 M1465,195 L1505,365 M1635,255 L1620,390"
+        stroke="#f3d285" stroke-opacity="0.35" stroke-width="1.4" fill="none"/>
+
+  <!-- 5. 第一层祥云流雾 -->
+  <path d="M0,455 Q160,415 320,450 T640,435 T960,455 T1280,430 T1600,455 T1800,440 L1800,620 L0,620 Z"
+        fill="url(#cloudMist)"/>
+
+  <!-- 6. 中近景石青重峦与飞瀑悬崖 -->
+  <!-- 左卷：引气入道·筑基奇峰 -->
+  <path d="M-10,640 L85,430 L155,485 L255,335 L345,495 L430,385 L535,550 L620,590 L-10,690 Z"
+        fill="url(#mtAzurite)" stroke="url(#goldOutline)" stroke-width="1.5"/>
+  <!-- 左卷飞瀑 -->
+  <path d="M252,355 C256,415 245,465 258,545" stroke="#dff7f0" stroke-width="4" stroke-opacity="0.65" fill="none"/>
+  <path d="M259,365 C262,420 255,470 266,545" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.8" fill="none"/>
+
+  <!-- 中卷：太源仙台·虹桥相连 -->
+  <path d="M585,635 L695,395 L775,455 L895,265 L1015,450 L1095,385 L1210,625 Z"
+        fill="url(#mtAzurite)" stroke="url(#goldOutline)" stroke-width="1.8"/>
+  <!-- 中卷双飞瀑 -->
+  <path d="M888,295 C884,365 894,435 882,535" stroke="#dff7f0" stroke-width="4.5" stroke-opacity="0.62" fill="none"/>
+  <path d="M904,305 C908,370 900,435 912,535" stroke="#ffffff" stroke-width="2" stroke-opacity="0.78" fill="none"/>
+
+  <!-- 右卷：古陵碑林·金丹天阙 -->
+  <path d="M1185,640 L1295,375 L1385,470 L1490,275 L1595,455 L1685,335 L1810,585 L1810,720 L1185,720 Z"
+        fill="url(#mtAzurite)" stroke="url(#goldOutline)" stroke-width="1.6"/>
+
+  <!-- 7. 仙家楼阁亭台 (左山门亭、中太源天宫、右金丹仙阙) -->
+  <!-- 左卷仙亭 -->
+  <g transform="translate(230, 298)" fill="#20170f" stroke="#f0ca72" stroke-width="1.2">
+    <polygon points="0,24 26,6 52,24"/>
+    <line x1="10" y1="24" x2="10" y2="38"/>
+    <line x1="42" y1="24" x2="42" y2="38"/>
+    <rect x="6" y="38" width="40" height="4" fill="#d4a855"/>
+  </g>
+  <!-- 中卷太源天宫 -->
+  <g transform="translate(855, 212)" fill="#231910" stroke="#ffe08c" stroke-width="1.4">
+    <polygon points="10,22 45,2 80,22"/>
+    <polygon points="0,36 45,16 90,36"/>
+    <rect x="16" y="36" width="58" height="18" fill="#2e2013"/>
+    <rect x="38" y="41" width="14" height="13" fill="#ffdf85" fill-opacity="0.85"/>
+    <rect x="10" y="54" width="70" height="5" fill="#d4a855"/>
+  </g>
+  <!-- 右卷古陵天阙 -->
+  <g transform="translate(1458, 228)" fill="#211812" stroke="#f2cf78" stroke-width="1.3">
+    <polygon points="4,20 32,2 60,20"/>
+    <polygon points="-4,34 32,14 68,34"/>
+    <rect x="10" y="34" width="44" height="15"/>
+    <rect x="27" y="38" width="10" height="11" fill="#ffe294" fill-opacity="0.8"/>
+  </g>
+
+  <!-- 8. 蜿蜒修仙金阶古道 (贯穿第1章 -> 第5章) -->
+  <path d="M90,650 Q210,560 320,495 T580,475 T895,430 T1220,470 T1520,395 T1730,455"
+        fill="none" stroke="#ffe599" stroke-width="3.2" stroke-dasharray="8 6" stroke-opacity="0.65"/>
+  <path d="M90,650 Q210,560 320,495 T580,475 T895,430 T1220,470 T1520,395 T1730,455"
+        fill="none" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.38"/>
+
+  <!-- 9. 第二层温润宣纸云海 (底部托起圆章与文字) -->
+  <path d="M0,565 Q140,525 290,560 T590,545 T900,565 T1210,540 T1520,565 T1800,545 L1800,800 L0,800 Z"
+        fill="url(#cloudMist)"/>
+
+  <!-- 10. 前景青松与山石剪影 -->
+  <path d="M0,665 L115,575 L220,645 L350,595 L480,680 L0,800 Z" fill="url(#mtFore)" opacity="0.82"/>
+  <path d="M1320,685 L1460,585 L1610,645 L1725,565 L1800,625 L1800,800 L1320,800 Z" fill="url(#mtFore)" opacity="0.82"/>
+
+  <!-- 仙鹤点缀 -->
+  <g stroke="#fff8e6" stroke-width="1.8" fill="none" opacity="0.75">
+    <path d="M640,210 Q648,202 656,210 Q664,202 672,210"/>
+    <path d="M685,192 Q691,186 697,192 Q703,186 709,192"/>
+    <path d="M1140,198 Q1148,190 1156,198 Q1164,190 1172,198"/>
+  </g>
+</svg>

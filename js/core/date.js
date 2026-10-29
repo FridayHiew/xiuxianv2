@@ -37,7 +37,10 @@ function getDateInfo() {
     isYearEnd = true;
   }
 
-  const monthName = isYearEnd ? "岁末" : LUNAR_MONTHS[month - 1];
+  const lunarMonths = (typeof LUNAR_MONTHS !== "undefined" && Array.isArray(LUNAR_MONTHS))
+    ? LUNAR_MONTHS
+    : ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+  const monthName = isYearEnd ? "岁末" : lunarMonths[month - 1];
   return { year, month, day, monthName, isYearEnd };
 }
 

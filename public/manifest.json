@@ -1,0 +1,44 @@
+{
+  "id": "/",
+  "name": "修仙人生",
+  "short_name": "修仙人生",
+  "description": "文字修仙RPG角色扮演模拟器，开辟道途，修习心法法术，炼丹历练，探索宗门与机缘冒险。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1c19",
+  "theme_color": "#182b26",
+  "categories": [
+    "games",
+    "entertainment",
+    "role playing"
+  ],
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

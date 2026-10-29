@@ -95,6 +95,10 @@ function showEnding(endingKey) {
   const ending = ENDING_TEXTS[endingKey];
   if (!ending) return;
 
+  if (typeof recordSectChronicleEntry === "function") {
+    recordSectChronicleEntry(`【大千结局 · ${ending.title}】${ending.text ? ending.text.replace(/\s+/g, ' ').slice(0, 42) : ''}`);
+  }
+
   const info = getPlayerRealmInfo();
   const realmName = info.realm === 0 ? "凡人" :
     `${REALMS[info.realm].name}·${subName(info.lvl)}${info.lvl}重`;
@@ -111,8 +115,9 @@ function showEnding(endingKey) {
     <hr style="border-color:#2a2216;margin:8px 0;">
     ${summary}
   `, [
+    { label: "📜 翻阅宗门青史", fn: () => { if (typeof openSectChronicleModal === "function") openSectChronicleModal(); } },
     { label: "导出存档（版本 2 伏笔）", fn: () => { closeModal(); exportEndingSave(endingKey); } },
-    { label: "重开一生", fn: () => { closeModal(); resetGame(); } },
+    { label: "重开一生", primary: true, fn: () => { closeModal(); resetGame(); } },
   ]);
 }
 

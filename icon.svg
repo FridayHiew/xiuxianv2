@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1f443b"/>
+      <stop offset="60%" stop-color="#112721"/>
+      <stop offset="100%" stop-color="#07120f"/>
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff2b3"/>
+      <stop offset="40%" stop-color="#d4a347"/>
+      <stop offset="80%" stop-color="#996f21"/>
+      <stop offset="100%" stop-color="#5a3e0f"/>
+    </linearGradient>
+    <linearGradient id="jadeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b6fcd5"/>
+      <stop offset="50%" stop-color="#3bb371"/>
+      <stop offset="100%" stop-color="#124e32"/>
+    </linearGradient>
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Outer Cloud Filigree Ring -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="url(#goldGrad)" stroke-width="4" stroke-dasharray="14 8" opacity="0.6"/>
+  <circle cx="256" cy="256" r="202" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.4"/>
+  <circle cx="256" cy="256" r="188" fill="none" stroke="url(#goldGrad)" stroke-width="7" filter="url(#goldGlow)"/>
+
+  <!-- 八卦卦象简饰 -->
+  <g stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round" opacity="0.75">
+    <!-- 乾 (上) -->
+    <line x1="236" y1="82" x2="276" y2="82"/>
+    <line x1="236" y1="90" x2="276" y2="90"/>
+    <line x1="236" y1="98" x2="276" y2="98"/>
+    <!-- 坤 (下) -->
+    <line x1="236" y1="414" x2="252" y2="414"/><line x1="260" y1="414" x2="276" y2="414"/>
+    <line x1="236" y1="422" x2="252" y2="422"/><line x1="260" y1="422" x2="276" y2="422"/>
+    <line x1="236" y1="430" x2="252" y2="430"/><line x1="260" y1="430" x2="276" y2="430"/>
+    <!-- 离 (左) -->
+    <line x1="82" y1="246" x2="82" y2="266"/>
+    <line x1="90" y1="246" x2="90" y2="253"/><line x1="90" y1="259" x2="90" y2="266"/>
+    <line x1="98" y1="246" x2="98" y2="266"/>
+    <!-- 坎 (右) -->
+    <line x1="414" y1="246" x2="414" y2="253"/><line x1="414" y1="259" x2="414" y2="266"/>
+    <line x1="422" y1="246" x2="422" y2="266"/>
+    <line x1="430" y1="246" x2="430" y2="253"/><line x1="430" y1="259" x2="430" y2="266"/>
+  </g>
+
+  <!-- 中央太极法印 -->
+  <g transform="translate(256, 256)">
+    <!-- 太极阴阳底盘 -->
+    <circle cx="0" cy="0" r="148" fill="#081512" stroke="url(#goldGrad)" stroke-width="6"/>
+
+    <!-- 阳仪 (金色半边与大圆弧) -->
+    <path d="M 0,-148 A 148,148 0 0,1 0,148 A 74,74 0 0,1 0,0 A 74,74 0 0,0 0,-148 Z" fill="url(#goldGrad)"/>
+
+    <!-- 阴阳鱼眼 -->
+    <!-- 阳中之阴 (上黑眼) -->
+    <circle cx="0" cy="-74" r="26" fill="#091714"/>
+    <circle cx="0" cy="-74" r="10" fill="url(#jadeGrad)"/>
+
+    <!-- 阴中之阳 (下金眼) -->
+    <circle cx="0" cy="74" r="26" fill="url(#goldGrad)"/>
+    <circle cx="0" cy="74" r="10" fill="#091714"/>
+
+    <!-- 太极中央飞剑光华 -->
+    <path d="M 0,-120 L 7,-30 L 18,-24 L 6,-18 L 4,110 L 0,128 L -4,110 L -6,-18 L -18,-24 L -7,-30 Z" fill="#ffffff" opacity="0.88" filter="url(#goldGlow)"/>
+    <circle cx="0" cy="-24" r="5" fill="#f7d88e"/>
+  </g>
+
+  <!-- 顶部修真仙光印记 -->
+  <text x="256" y="146" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="28" font-weight="900" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="8">修 仙</text>
+  <text x="256" y="388" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="22" font-weight="700" fill="#a4e4c3" text-anchor="middle" letter-spacing="6">一念逍遥</text>
+</svg>

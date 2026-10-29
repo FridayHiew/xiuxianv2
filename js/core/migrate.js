@@ -54,7 +54,36 @@ function applySaveDefaults(S) {
 
   /* 基础字段 */
   if (!S.inventory) S.inventory = {};
+  /* 清理并预热背包内的所有灵物道具，杜绝 undefined */
+  for (const id in S.inventory) {
+    if (!id || id === "undefined" || id === "null" || S.inventory[id] <= 0) {
+      delete S.inventory[id];
+      continue;
+    }
+    if (typeof getItem === "function") {
+      getItem(id);
+    }
+  }
   if (!S.tools) S.tools = {};
+  for (const tid in S.tools) {
+    if (!tid || tid === "undefined" || tid === "null" || !S.tools[tid]) {
+      delete S.tools[tid];
+      continue;
+    }
+    if (typeof getItem === "function") {
+      getItem(tid);
+    }
+  }
+  if (S.flags && S.flags.auction && Array.isArray(S.flags.auction.stock)) {
+    const badStock = S.flags.auction.stock.some(g => !g || !g.itemId || g.itemId === "undefined" || g.itemId === "null");
+    if (badStock) {
+      if (typeof generateAuctionStock === "function") {
+        S.flags.auction.stock = generateAuctionStock();
+      } else {
+        S.flags.auction.stock = S.flags.auction.stock.filter(g => g && g.itemId && g.itemId !== "undefined" && g.itemId !== "null");
+      }
+    }
+  }
   if (!S.hobbies) S.hobbies = [];
   if (!S.hobbySkill) S.hobbySkill = {};
 
@@ -115,23 +144,32 @@ function applySaveDefaults(S) {
     S.inventory["book_summon_beast"] = (S.inventory["book_summon_beast"] || 0) + cnt;
   }
 
-  /* 基础拳脚与武器招式补齐（兼容老档） */
-  if (S.flags && S.flags.sectJoined) {
-    if (!S.skills) S.skills = SKILLS.reduce((o, k) => { o[k] = { lvl: 0, exp: 0 }; return o; }, {});
-    const hasUnarmed = (S.skills["拳"]?.lvl > 0) || (S.skills["掌"]?.lvl > 0);
-    const hasWeapon = (S.skills["剑"]?.lvl > 0) || (S.skills["刀"]?.lvl > 0) || (S.skills["棍"]?.lvl > 0) || (S.skills["鞭"]?.lvl > 0);
-    if (!hasUnarmed) {
-      if (!S.skills["拳"]) S.skills["拳"] = { lvl: 1, exp: 0 };
-      else S.skills["拳"].lvl = Math.max(1, S.skills["拳"].lvl);
-      if (!S.combatSkills.learned.includes("sk_fist1")) S.combatSkills.learned.push("sk_fist1");
+  /* 仅保留玩家实际选择的入门拳脚与兵刃招式（清理旧版误塞的全部基础招式） */
+  if (!S.combatSkills) S.combatSkills = { learned: [] };
+  const starterUnarmedIds = ["sk_fist1", "sk_palm1", "sk_leg1"];
+  const starterWeaponIds = ["sk_sword1", "sk_blade1", "sk_staff1", "sk_whip1"];
+  if (S.learnedArts && typeof S.learnedArts === "object") {
+    const chosenUnarmed = starterUnarmedIds.filter(id => S.learnedArts[id]);
+    if (chosenUnarmed.length > 0) {
+      const keepU = chosenUnarmed[chosenUnarmed.length - 1];
+      S.combatSkills.learned = S.combatSkills.learned.filter(id => !starterUnarmedIds.includes(id) || id === keepU);
+      if (!S.combatSkills.learned.includes(keepU)) S.combatSkills.learned.push(keepU);
     }
-    if (!hasWeapon) {
-      if (!S.skills["剑"]) S.skills["剑"] = { lvl: 1, exp: 0 };
-      else S.skills["剑"].lvl = Math.max(1, S.skills["剑"].lvl);
-      if (!S.combatSkills.learned.includes("sk_sword1")) S.combatSkills.learned.push("sk_sword1");
-      if (!S.equipped) S.equipped = {};
-      if (!S.equipped.rightHand) S.equipped.rightHand = "e_sword1";
+    const chosenWeapon = starterWeaponIds.filter(id => S.learnedArts[id]);
+    if (chosenWeapon.length > 0) {
+      const keepW = chosenWeapon[chosenWeapon.length - 1];
+      S.combatSkills.learned = S.combatSkills.learned.filter(id => !starterWeaponIds.includes(id) || id === keepW);
+      if (!S.combatSkills.learned.includes(keepW)) S.combatSkills.learned.push(keepW);
     }
+  }
+
+  /* 伴生灵兽白狐 defId 兼容迁移 */
+  if (S.pets && Array.isArray(S.pets.list)) {
+    S.pets.list.forEach(p => {
+      if (p.name === "伴生白狐" && (p.defId === "e_wolf" || !p.defId)) {
+        p.defId = "e_white_fox";
+      }
+    });
   }
 
   /* 装备 */
@@ -208,8 +246,12 @@ function applySaveDefaults(S) {
   if (S.peak === undefined) S.peak = null;
   if (S.master === undefined) S.master = null;
   if (S.meditateCount === undefined) S.meditateCount = 1;
-  if (!S.cave) S.cave = { level: 0, alchemy: 0, forge: 0, garden: 0, spirit: 0 };
+  if (!S.cave) S.cave = { level: 0, alchemy: 0, forge: 0, beast: 0, garden: 0, spirit: 0 };
   if (S.cave.forge === undefined) S.cave.forge = 0;
+  if (S.cave.beast === undefined) S.cave.beast = 0;
+  if (S.cave.alchemy === undefined) S.cave.alchemy = 0;
+  if (S.cave.garden === undefined) S.cave.garden = 0;
+  if (S.cave.spirit === undefined) S.cave.spirit = 0;
   if (!S.flags.auction) S.flags.auction = { refreshDay: 0, stock: [], bought: {} };
   if (!S.flags.compRecord) S.flags.compRecord = {};
   if (S.flags.competition === undefined) S.flags.competition = null;
@@ -223,6 +265,8 @@ function applySaveDefaults(S) {
   if (S.poison === undefined) S.poison = 0;
   if (!S.flags.fastingDays) S.flags.fastingDays = 0;
   if (!S.flags.reduceEncounter) S.flags.reduceEncounter = 0;
+  if (!S.flags.knownRecipes) S.flags.knownRecipes = {};
+  if (!S.flags.knownForgeRecipes) S.flags.knownForgeRecipes = {};
 }
 
 /* ============================================================

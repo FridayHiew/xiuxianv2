@@ -648,18 +648,17 @@
         wrap.id = "audioWidget";
 
         wrap.innerHTML = `
-          <div class="icon-btn audio-btn muted" id="audioBtn" onclick="onAudioBtnClick(event)" title="仙乐控制 (点击播放/静音，长按或点齿轮调音量)">
+          <div class="icon-btn audio-btn muted" id="audioBtn" onclick="onAudioBtnClick(event)" title="背景仙乐 (点击静音/播放)">
             <span id="audioIcon">🔇</span>
-            <span class="audio-gear" onclick="openAudioSettings(event)" title="调音量/换曲风">⚙</span>
+            <span class="audio-gear" onclick="openAudioSettings(event)" title="调音量">⚙</span>
           </div>
           <div class="audio-popover" id="audioPopover" style="display:none;">
             <div class="popover-header">
-              <span class="popover-title">仙音渺渺 · 背景仙乐</span>
+              <span class="popover-title">🎵 仙乐调节</span>
               <button class="popover-close" id="audioPopoverClose" onclick="openAudioSettings(event, false)" title="关闭">✕</button>
             </div>
             <div class="popover-body">
               <div class="audio-row">
-                <span class="label">状态:</span>
                 <button class="btn-toggle-play inactive" id="btnAudioTogglePlay" onclick="toggleAudio()">
                   静音中 (点击播放)
                 </button>
@@ -670,15 +669,11 @@
                 <span class="volume-num" id="audioVolumeNum">${Math.round(this.volume * 100)}%</span>
               </div>
               <div class="theme-select-section">
-                <div class="section-subtitle">曲风意境</div>
                 <div class="theme-pills">
-                  ${Object.keys(THEMES).map(k => `
-                    <button class="theme-pill ${this.currentThemeKey === k ? 'active' : ''}" data-theme="${k}" onclick="onAudioThemeClick('${k}')">
-                      ${THEMES[k].name}
-                    </button>
-                  `).join('')}
+                  <button class="theme-pill ${this.currentThemeKey === 'fairy' ? 'active' : ''}" data-theme="fairy" onclick="onAudioThemeClick('fairy')">清幽</button>
+                  <button class="theme-pill ${this.currentThemeKey === 'guqin' ? 'active' : ''}" data-theme="guqin" onclick="onAudioThemeClick('guqin')">古琴</button>
+                  <button class="theme-pill ${this.currentThemeKey === 'zen' ? 'active' : ''}" data-theme="zen" onclick="onAudioThemeClick('zen')">入定</button>
                 </div>
-                <div class="theme-desc" id="audioThemeDesc">${THEMES[this.currentThemeKey].desc}</div>
               </div>
             </div>
           </div>

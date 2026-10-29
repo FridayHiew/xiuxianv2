@@ -13,19 +13,23 @@ function formatStoryText(str) {
 /* 解析并生成奖励物品 ID（支持心法残卷、静态装备与动态品级丹药） */
 function resolveStoryRewardItemId(rawId) {
   if (!rawId) return null;
-  if (typeof ITEMS !== "undefined" && ITEMS[rawId] && ITEMS[rawId].type !== "pillTemplate") {
-    return rawId;
-  }
   if (typeof getOrCreatePillItem === "function") {
     const m = rawId.match(/^(.+)_([0-5])品$/);
     if (m) {
       const created = getOrCreatePillItem(m[1], parseInt(m[2], 10));
-      if (created) return m[1] + "_" + m[2] + "品";
+      if (created) {
+        ITEMS[rawId] = created;
+        return created.id || rawId;
+      }
     }
     if (typeof ITEMS !== "undefined" && ITEMS[rawId] && ITEMS[rawId].type === "pillTemplate") {
       const created = getOrCreatePillItem(rawId, 2);
-      if (created) return rawId + "_2品";
+      if (created) return created.id || (rawId + "_2品");
     }
+  }
+  if (typeof getItem === "function") {
+    const it = getItem(rawId);
+    if (it) return it.id || rawId;
   }
   return rawId;
 }
@@ -34,9 +38,8 @@ function resolveStoryRewardItemId(rawId) {
 function getStoryRewardItemName(rawId) {
   if (!rawId) return "";
   const finalId = resolveStoryRewardItemId(rawId);
-  if (typeof ITEMS !== "undefined" && ITEMS[finalId]) {
-    return ITEMS[finalId].name;
-  }
+  const it = (typeof getItem === "function" ? getItem(finalId) : null) || (typeof ITEMS !== "undefined" ? ITEMS[finalId] : null);
+  if (it && it.name) return it.name;
   return rawId;
 }
 

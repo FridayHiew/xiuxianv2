@@ -58,12 +58,17 @@ function completeTask(taskId) {
     for (const id in r.items) {
       /* ★ 如果是模板 id（如 "回春丹_2阶"），先 getOrCreatePillItem 注册 */
       let finalId = id;
-      if (!ITEMS[id] && id.indexOf("_阶") > 0) {
+      if (ITEMS[id] && ITEMS[id].type === "pillTemplate" && typeof getOrCreatePillItem === "function") {
         const item = getOrCreatePillItem(id, 1);
-        if (item) finalId = item.id;
+        if (item && item.id) finalId = item.id;
+      } else if (!ITEMS[id] && typeof getOrCreatePillItem === "function") {
+        const mPill = String(id).match(/^(.*?)_(\d+)品$/);
+        const item = mPill ? getOrCreatePillItem(mPill[1], parseInt(mPill[2], 10)) : getOrCreatePillItem(id, 1);
+        if (item && item.id) finalId = item.id;
       }
       addItem(finalId, r.items[id]);
-      const name = ITEMS[finalId] ? ITEMS[finalId].name : finalId;
+      const itObj = (typeof getItem === "function" ? getItem(finalId) : null) || ITEMS[finalId];
+      const name = itObj ? itObj.name : finalId;
       detail.push(`${name} ×${r.items[id]}`);
     }
   }
@@ -138,48 +143,53 @@ function doPatrol() {
 }
 
 /* ============================================================
-   传功堂听讲（每周日）
+   传功堂听讲（周末宗门传功大典）
    ============================================================ */
 function doListenLecture() {
-  if (S.weekday !== 0) {
-    log("传功堂只在周日开讲。", "c-bad");
+  if (S.weekday !== 0 && S.weekday !== 6) {
+    log("传功大典仅在周末（周六/周日）开坛讲道。", "c-bad");
     return;
   }
   if (S.actionsUsed >= ACTIONS_PER_SLOT) {
     log("本时段行动已用完。", "c-bad");
     return;
   }
-  if (S.flags.listenedThisWeek === getWeekKey()) {
-    log("本周已听讲过了。", "c-bad");
+  if (S.flags.listenedDay === S.day) {
+    log("今日已入座聆听长老讲道，不可贪多务得。", "c-bad");
     return;
   }
 
   S.actionsUsed++;
-  S.flags.listenedThisWeek = getWeekKey();
+  S.flags.listenedDay = S.day;
 
-  /* 涨所有基本功 +2 */
+  /* 涨所有基本功 +2~3 */
   const detail = [];
   SKILLS.forEach(k => {
     if (!S.skills[k]) S.skills[k] = { lvl: 0, exp: 0 };
-    S.skills[k].exp += 2;
+    const inc = rndInt(2, 3);
+    S.skills[k].exp += inc;
     while (S.skills[k].exp >= SKILL_LVL_EXP && S.skills[k].lvl < MAX_SKILL_LVL) {
       S.skills[k].exp -= SKILL_LVL_EXP;
       S.skills[k].lvl++;
     }
   });
-  detail.push("所有基本功 +2 经验");
+  detail.push("所有兵刃拳脚技能 +2~3 经验");
 
-  /* 涨当前心法熟练度 +3 */
+  /* 涨当前心法熟练度 +5 与修为经验 +60 */
   const art = getCurrentArt();
   if (art) {
     const prog = getArtProgress(art.id);
-    prog.proficiency = Math.min(100, prog.proficiency + 3);
-    detail.push(`当前心法熟练度 +3`);
+    prog.proficiency = Math.min(100, prog.proficiency + 5);
+    detail.push(`当前心法熟练度 +5`);
   }
+  const expGain = rndInt(40, 70);
+  if (typeof gainCultivationExp === "function") gainCultivationExp(expGain);
+  detail.push(`领悟天道玄音：修为经验 +${expGain}`);
+  S.dao = (S.dao || 0) + 1;
+  detail.push(`道心 +1`);
 
-  log("【传功堂】听讲完毕，有所领悟。", "c-gold");
-  save(); render();
-  showActionModal("传功堂听讲", detail);
+  log(`【传功大典】聆听长老玄音灌顶，修为经验 +${expGain}，道心 +1，诸法精进！`, "c-gold");
+  consumeAction(() => showActionModal("传功大典听讲", detail));
 }
 
 /* 周的 key（用于判断本周是否听讲） */

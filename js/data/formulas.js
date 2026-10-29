@@ -43,14 +43,23 @@ const FORMULA = {
    ============================================================ */
 
 const CRIT = {
-  base: 0.05,
+  base: 0.08,
   luckFactor: 0.01,
-  max: 0.5,
+  max: 0.55,
 };
 
 function calcCritRate(unit) {
-  const luck = (unit && unit.luck) || 0;
-  return Math.min(CRIT.max, CRIT.base + luck * CRIT.luckFactor);
+  if (!unit) return CRIT.base;
+  let luck = unit.luck;
+  if (luck === undefined || luck === null) {
+    /* 敌人与灵宠若未显式配置机缘，按境界、小境界与身法折算天然暴击机缘 */
+    const realmBonus = Math.max(0, (unit.realm || 1) * 4);
+    const subBonus = Math.max(0, (unit.sub || 1) * 1.4);
+    const spdBonus = Math.max(0, ((unit.speed || 10) - 10) * 0.45);
+    luck = realmBonus + subBonus + spdBonus;
+  }
+  const bonus = unit.critBonus || 0;
+  return Math.min(CRIT.max, CRIT.base + luck * CRIT.luckFactor + bonus);
 }
 
 /* ============================================================
@@ -79,20 +88,20 @@ const AI_CONFIG = {
   /* 血低于这个比例 → 用回血丹 */
   healHpThreshold: 0.3,
 
-  /* 灵力至少这个值 → 可能用法术 */
-  spellMpThreshold: 20,
+  /* 灵力至少这个值 → 可能用法术（兼容8~15点消耗的基础法术） */
+  spellMpThreshold: 8,
 
   /* 血气至少这个值 → 可能用技能 */
-  skillHpThreshold: 20,
+  skillHpThreshold: 12,
 
   /* 逃跑血线 */
   fleeHpThreshold: 0.2,
 
   /* 各动作权重（随机时用） */
   weights: {
-    attack: 50,
-    spell: 20,
-    skill: 20,
+    attack: 40,
+    spell: 35,
+    skill: 25,
     item: 5,
     defend: 5,
   },

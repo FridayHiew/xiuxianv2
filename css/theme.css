@@ -1,53 +1,61 @@
 /* ============================================================
-   theme.css - 仙侠国风主题变量与字体规范
+   theme.css - 仙侠国风主题变量与字体规范（温润宣纸 + 青绿仙山 提亮版）
    ============================================================ */
 
 :root {
-  /* 背景层次：墨色、玄黑、紫檀、茶晶 */
-  --bg-dark:       #080705;
-  --bg-dark2:      #050403;
-  --bg-panel:      #120e0a;
-  --bg-card:       #19140e;
-  --bg-elevated:   #211a12;
-  --bg-glass:      rgba(18, 14, 10, 0.85);
+  /* 背景层次：远山青黛、竹月松烟、青玉案、温润云雾 */
+  --bg-dark:       #162624;
+  --bg-dark2:      #111f1d;
+  --bg-panel:      rgba(30, 52, 48, 0.78);
+  --bg-card:       rgba(38, 64, 59, 0.80);
+  --bg-elevated:   rgba(46, 77, 72, 0.84);
+  --bg-glass:      rgba(30, 51, 48, 0.76);
 
-  /* 边框：古铜、鎏金、朱砂、玄铁 */
-  --border-main:   #3d2e1b;
-  --border-soft:   #291f13;
-  --border-gold:   #8a652a;
-  --border-gold-bright: #d4a347;
-  --border-strong: #614924;
+  /* 温润宣纸局部点缀色与半透明洒金宣纸纹理 */
+  --paper-light:   #fbf5e6;
+  --paper-mid:     #eadbc0;
+  --paper-Warm:    #dcc7a1;
+  --paper-ink:     #23180c;
+  --xuan-tint-sheen: linear-gradient(135deg, rgba(251, 243, 224, 0.11) 0%, rgba(234, 219, 188, 0.05) 48%, rgba(106, 188, 166, 0.08) 100%);
+  --xuan-fiber-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23fff5dc' stroke-width='0.6'%3E%3Cline x1='0' y1='8' x2='64' y2='8' stroke-opacity='0.045'/%3E%3Cline x1='0' y1='20' x2='64' y2='20' stroke-opacity='0.03'/%3E%3Cline x1='0' y1='32' x2='64' y2='32' stroke-opacity='0.045'/%3E%3Cline x1='0' y1='44' x2='64' y2='44' stroke-opacity='0.03'/%3E%3Cline x1='0' y1='56' x2='64' y2='56' stroke-opacity='0.045'/%3E%3Cpath d='M8,14 Q14,11 20,15 M42,28 Q49,25 54,30 M16,49 Q22,52 29,48' stroke-opacity='0.055'/%3E%3C/g%3E%3Ccircle cx='18' cy='22' r='0.9' fill='%23ffe28a' fill-opacity='0.14'/%3E%3Ccircle cx='49' cy='14' r='0.7' fill='%23ffe28a' fill-opacity='0.11'/%3E%3Ccircle cx='35' cy='46' r='1.0' fill='%23ffe28a' fill-opacity='0.12'/%3E%3C/svg%3E");
 
-  /* 文字：云锦金、牙白、枯茶、流光金 */
-  --text-main:     #cfc2a5;
-  --text-dim:      #8c7c5e;
-  --text-gold:     #f2cf7e;
-  --text-gold2:    #e0ba6c;
-  --text-muted:    #695944;
-  --text-bright:   #fff1cf;
+  /* 边框：鎏金、青玉、暖铜、松烟 */
+  --border-main:   #46665e;
+  --border-soft:   #355049;
+  --border-gold:   #c49e50;
+  --border-gold-bright: #f2cf78;
+  --border-strong: #8f7236;
 
-  /* 灵韵与品质五行色 */
-  --c-normal:      #b8a888;
-  --c-good:        #5fb865;
-  --c-bad:         #db4c3b;
-  --c-gold:        #f0ce78;
-  --c-purple:      #b88ce8;
-  --c-blue:        #5da8eb;
-  --c-pink:        #e884a6;
-  --c-cyan:        #4fd1c5;
+  /* 文字：宣纸象牙白、青雾银、流光金、竹露白 */
+  --text-main:     #f5eedc;
+  --text-dim:      #bed1c9;
+  --text-gold:     #ffe28a;
+  --text-gold2:    #f2cb6d;
+  --text-muted:    #8fa89f;
+  --text-bright:   #fffbf0;
 
-  /* 气血 (生机赤金) / 灵力 (浩瀚玄幽) */
-  --hp-from:       #7a1818;
-  --hp-to:         #e64c38;
-  --mp-from:       #133863;
-  --mp-to:         #3b8deb;
-  --exp-from:      #6b4912;
-  --exp-to:        #e0a82b;
+  /* 灵韵与品质五行色（提亮通透度） */
+  --c-normal:      #e0d6c3;
+  --c-good:        #6ee787;
+  --c-bad:         #f46858;
+  --c-gold:        #ffe082;
+  --c-purple:      #cfa5f8;
+  --c-blue:        #6eb8f5;
+  --c-pink:        #f296b4;
+  --c-cyan:        #5eead4;
+
+  /* 气血 (朱砂丹霞) / 灵力 (沧海琉璃) */
+  --hp-from:       #9e2a24;
+  --hp-to:         #f05a46;
+  --mp-from:       #1d558a;
+  --mp-to:         #4ea3f5;
+  --exp-from:      #8c621c;
+  --exp-to:        #f2bc42;
 
   /* 时段天光 */
-  --hour-morning:  #f0cf7a;
-  --hour-noon:     #e69a38;
-  --hour-night:    #6daee6;
+  --hour-morning:  #ffe08a;
+  --hour-noon:     #f7ae4a;
+  --hour-night:    #82c0f5;
 
   /* 尺寸圆角 (rem 响应式单位) */
   --radius-xs:     0.2rem;
@@ -57,9 +65,9 @@
   --radius-xl:     1rem;
 
   /* 仙侠专属光晕 */
-  --shadow-gold:   0 0 1.5rem rgba(242, 207, 126, 0.18);
-  --shadow-card:   0 0.35rem 1.1rem rgba(0, 0, 0, 0.65);
-  --shadow-btn:    0 0.2rem 0.5rem rgba(0, 0, 0, 0.5), inset 0 0.06rem 0.06rem rgba(255, 230, 160, 0.15);
+  --shadow-gold:   0 0 1.4rem rgba(242, 207, 120, 0.25);
+  --shadow-card:   0 0.3rem 0.95rem rgba(8, 18, 16, 0.45);
+  --shadow-btn:    0 0.18rem 0.45rem rgba(8, 18, 16, 0.38), inset 0 0.06rem 0.08rem rgba(255, 245, 215, 0.22);
 
   /* 字体族群：优先高雅典雅宋体/衬线，保留无衬线现代清晰度 */
   --font-title:    "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", "STSong", serif;

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bgSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e3632"/>
+      <stop offset="45%" stop-color="#25423d"/>
+      <stop offset="100%" stop-color="#152724"/>
+    </linearGradient>
+    <radialGradient id="topDawn" cx="50%" cy="14%" r="55%">
+      <stop offset="0%" stop-color="#ffeab3" stop-opacity="0.24"/>
+      <stop offset="45%" stop-color="#68b8a0" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#1e3632" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="inkMtFar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#589486" stop-opacity="0.34"/>
+      <stop offset="70%" stop-color="#294a44" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#182d29" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="inkMtMid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6ab09a" stop-opacity="0.28"/>
+      <stop offset="55%" stop-color="#2c544d" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#162926" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="inkMtNear" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#437a6e" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#12221f" stop-opacity="0.48"/>
+    </linearGradient>
+    <linearGradient id="mistBand" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7eed8" stop-opacity="0.14"/>
+      <stop offset="60%" stop-color="#bfe0d4" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#182d29" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#bgSky)"/>
+  <rect width="1440" height="900" fill="url(#topDawn)"/>
+
+  <!-- 远岫淡墨青绿 -->
+  <path d="M0,420 L95,310 L185,360 L290,230 L405,345 L520,255 L630,350 L740,195 L855,320 L970,220 L1085,335 L1200,210 L1320,315 L1440,245 L1440,900 L0,900 Z"
+        fill="url(#inkMtFar)"/>
+
+  <!-- 云海气韵 -->
+  <path d="M0,410 Q180,375 360,405 T720,395 T1080,410 T1440,390 L1440,580 L0,580 Z"
+        fill="url(#mistBand)"/>
+
+  <!-- 中景水墨青绿叠嶂 -->
+  <path d="M0,560 L120,420 L215,480 L345,335 L465,470 L585,380 L710,490 L835,315 L960,455 L1090,345 L1215,465 L1335,365 L1440,440 L1440,900 L0,900 Z"
+        fill="url(#inkMtMid)" stroke="#e5c883" stroke-opacity="0.18" stroke-width="1.2"/>
+
+  <!-- 第二层山岚云气 -->
+  <path d="M0,585 Q210,545 420,580 T840,565 T1260,585 T1440,565 L1440,760 L0,760 Z"
+        fill="url(#mistBand)"/>
+
+  <!-- 近景松石远影 -->
+  <path d="M0,730 L135,615 L255,685 L395,590 L540,710 L715,635 L880,720 L1045,605 L1195,695 L1340,595 L1440,665 L1440,900 L0,900 Z"
+        fill="url(#inkMtNear)"/>
+</svg>

@@ -91,6 +91,7 @@ const ITEMS = {
   "book_sk_fist2":  { type: "skillbook", name: "崩拳秘籍",     skillId: "sk_fist2",  price: 150 },
   "book_sk_palm1":  { type: "skillbook", name: "推掌秘籍",     skillId: "sk_palm1",  price: 40 },
   "book_sk_palm2":  { type: "skillbook", name: "摧心掌秘籍",   skillId: "sk_palm2",  price: 200 },
+  "book_sk_leg1":   { type: "skillbook", name: "旋风腿秘籍",   skillId: "sk_leg1",   price: 45 },
   "book_sk_staff1": { type: "skillbook", name: "横扫秘籍",     skillId: "sk_staff1", price: 60 },
   "book_sk_whip1":  { type: "skillbook", name: "鞭击秘籍",     skillId: "sk_whip1",  price: 60 },
   "book_sk_beast1": { type: "skillbook", name: "兽吼秘籍",     skillId: "sk_beast1", price: 80 },

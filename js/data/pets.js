@@ -40,16 +40,22 @@ const PET_BREAK_REQ = {
 
 /* ===== 召唤技能 ===== */
 const SUMMON_SKILLS = [
-  /* 所有宗门皆修通灵御兽之术 */
   { id: "summon_beast",  name: "召唤灵兽", type: "召唤", petType: "beast",
-    cost: { mp: 30 }, sect: null,       desc: "召唤伴生灵兽协同出战" },
+    cost: { mp: 5 }, sect: null, desc: "运转通灵法契，召唤已装备的伴生灵兽或战魂协同出战" },
+  { id: "summon_soul",   name: "招魂仙帆", type: "召唤", petType: "soul",
+    cost: { mp: 8 }, sect: null, desc: "摇动招魂仙帆，引渡已装备的战魂灵体降临助阵（攻速强化）" },
+  { id: "summon_blood",  name: "激发血脉", type: "召唤", petType: "blood",
+    cost: { mp: 8 }, sect: null, desc: "唤醒体内远古血脉真灵，狂暴加持召唤物（攻击大幅提升）" },
+  { id: "summon_puppet", name: "天工机关术", type: "召唤", petType: "puppet",
+    cost: { mp: 8 }, sect: null, desc: "驱动玄铁机关傀儡或披甲战魂，化作坚固前锋（气血防御提升）" },
 ];
 
 /* ===== 工具函数 ===== */
 
 function getSummonSkill(id) {
+  if (!id) return null;
   if (id === "summon_sword") return SUMMON_SKILLS[0];
-  return SUMMON_SKILLS.find(s => s.id === id) || SUMMON_SKILLS[0];
+  return SUMMON_SKILLS.find(s => s.id === id) || null;
 }
 
 function getPetTalent(id) {

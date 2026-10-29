@@ -2,23 +2,43 @@
    ui/profile.js - 角色面板
    ============================================================ */
 
+const FALLBACK_LUNAR_MONTHS = [
+  "正月", "二月", "三月", "四月", "五月", "六月",
+  "七月", "八月", "九月", "十月", "冬月", "腊月",
+];
+
+function getSafeLunarMonths() {
+  if (typeof LUNAR_MONTHS !== "undefined" && Array.isArray(LUNAR_MONTHS)) {
+    return LUNAR_MONTHS;
+  }
+  if (typeof window !== "undefined" && Array.isArray(window.LUNAR_MONTHS)) {
+    return window.LUNAR_MONTHS;
+  }
+  return FALLBACK_LUNAR_MONTHS;
+}
+
 function initCreationPanel() {
+  const lunarMonths = getSafeLunarMonths();
   const m = document.getElementById("monthInput");
-  m.innerHTML = "";
-  for (let i = 1; i <= 12; i++) {
-    const o = document.createElement("option");
-    o.value = i;
-    o.textContent = LUNAR_MONTHS[i - 1];
-    if (i === 6) o.selected = true;
-    m.appendChild(o);
+  if (m) {
+    m.innerHTML = "";
+    for (let i = 1; i <= 12; i++) {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = lunarMonths[i - 1];
+      if (i === 6) o.selected = true;
+      m.appendChild(o);
+    }
   }
   const d = document.getElementById("dayInput");
-  d.innerHTML = "";
-  for (let i = 1; i <= 30; i++) {
-    const o = document.createElement("option");
-    o.value = i;
-    o.textContent = i + "日";
-    d.appendChild(o);
+  if (d) {
+    d.innerHTML = "";
+    for (let i = 1; i <= 30; i++) {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = i + "日";
+      d.appendChild(o);
+    }
   }
 }
 
@@ -103,11 +123,13 @@ const SKILL_ICONS = {
 };
 
 const SPELL_ICONS = {
-  "剑": "🗡️", "拳": "👊", "掌": "✋", "刀": "🔪", "棍": "🥢", "通用": "✨",
+  "剑": "🗡️", "刀": "🔪", "拳": "👊", "掌": "✋", "棍": "🥢", "鞭": "➰",
+  "兽": "🐾", "炼丹": "🧪", "炼器": "⚔️", "阵法": "🔮", "符": "📜", "通用": "✨",
 };
 
 const ITEM_TYPE_ICONS = {
   pill: "💊", petBreak: "🔮", food: "🍖", mat: "🌿", equip: "⚔️",
+  armor: "🥋", body: "🥋", cloth: "🥋",
   artifact: "🪞", heartFragment: "📜", spellbook: "📖", summonbook: "📜",
   heavenDefying: "☯️", quest: "🏷️", other: "📦",
 };
@@ -243,7 +265,7 @@ function renderProfileInfo() {
       </div>
       <div class="dao-meta-item">
         <span class="lbl">📅 生辰干支</span>
-        <span class="val">${LUNAR_MONTHS[S.birthday.month - 1]}${S.birthday.day}日 (${S.ie})</span>
+        <span class="val">${getSafeLunarMonths()[S.birthday.month - 1]}${S.birthday.day}日 (${S.ie})</span>
       </div>
       <div class="dao-meta-item">
         <span class="lbl">☯️ 命格气数</span>
@@ -440,6 +462,7 @@ function openSlotSelector(slotKey) {
     }
 
     const equippedIds = Object.values(S.equipped).filter(Boolean);
+    const matchingIds = [];
     ["equip", "artifact"].forEach(t => {
       const ids = getItemsByType(t);
       ids.forEach(id => {
@@ -456,19 +479,30 @@ function openSlotSelector(slotKey) {
           if (eq.slot === targetSlotFilter) match = true;
         }
 
-        if (!match) return;
-        candidatesCount++;
-        const tierCls = getItemTierColorClass(eq);
-        candidatesHtml += `
-          <div class="parchment-item-row" onclick="showItemDetailModal('${id}')" title="点击查看【${eq.name}】详情">
-            <div class="p-row-left">
-              <div class="p-row-icon">${eq.type === 'artifact' ? '🪞' : '⚔️'}</div>
-              <span class="p-row-name ${tierCls}">${eq.name}</span>
-            </div>
-            <button class="small" onclick="event.stopPropagation(); selectAndEquip('${slotKey}', '${id}', 'normal')">装配</button>
-          </div>
-        `;
+        if (match) matchingIds.push(id);
       });
+    });
+
+    if (typeof compareItemsByTierGradeDesc === "function") {
+      matchingIds.sort(compareItemsByTierGradeDesc);
+    }
+
+    matchingIds.forEach(id => {
+      const eq = ITEMS[id];
+      if (!eq) return;
+      candidatesCount++;
+      const tierCls = getItemTierColorClass(eq);
+      const tg = typeof getItemTierAndGrade === "function" ? getItemTierAndGrade(eq, id) : { badge: `${eq.tier || 1}阶·${eq.grade || 1}品` };
+      candidatesHtml += `
+        <div class="parchment-item-row" onclick="showItemDetailModal('${id}')" title="点击查看【${eq.name}】详情">
+          <div class="p-row-left">
+            <div class="p-row-icon">${typeof getItemIcon === 'function' ? getItemIcon(eq, id) : (eq.slot === 'body' ? '🥋' : '⚔️')}</div>
+            <span class="p-row-name ${tierCls}">${eq.name}</span>
+            <span class="p-row-badge">${tg.badge}</span>
+          </div>
+          <button class="small" onclick="event.stopPropagation(); selectAndEquip('${slotKey}', '${id}', 'normal')">装配</button>
+        </div>
+      `;
     });
   }
 
@@ -650,7 +684,7 @@ function renderProfileDestiny() {
    ============================================================ */
 function useItem(name) {
   if (!hasItem(name)) return;
-  let item = ITEMS[name];
+  let item = (typeof getItem === "function" ? getItem(name) : null) || ITEMS[name];
   if (!item && typeof getOrCreatePillItem === "function") {
     const m = name.match(/^(.*?)_(\d+)品$/);
     if (m) item = getOrCreatePillItem(m[1], parseInt(m[2], 10));
@@ -658,25 +692,28 @@ function useItem(name) {
   if (!item) return;
 
   /* 自动修复可能缺失 effect 属性的丹药 */
-  if (item.type === "pill" && (!item.effect || !item.effect.type)) {
+  const isPillType = item.type === "pill" || item.type === "pillTemplate";
+  if (isPillType && (!item.effect || !item.effect.type)) {
     const tier = item.tier || 1;
     const grade = item.grade !== undefined ? item.grade : 1;
     const gradePct = [0, 0.2, 0.4, 0.6, 0.8, 1.0][grade] || 0.4;
     const n = item.name || name;
-    if (n.includes("回春") || n.includes("回血")) {
+    if (n.includes("回春") || n.includes("回血") || n.includes("淬体")) {
       item.effect = { type: "heal", value: Math.round(200 * tier * gradePct) };
-    } else if (n.includes("回元") || n.includes("回灵")) {
+    } else if (n.includes("回元") || n.includes("回灵") || n.includes("凝神")) {
       item.effect = { type: "healMp", value: Math.round(200 * tier * gradePct) };
     } else if (n.includes("聚气") || n.includes("聚灵") || n.includes("聚凝")) {
       item.effect = { type: "exp", value: Math.round(100 * tier * gradePct) };
     } else if (n.includes("筑基") || n.includes("降尘") || n.includes("破境")) {
-      item.effect = { type: "breakBonus", value: 0.2 * gradePct };
+      item.effect = { type: "breakBonus", value: +(0.2 * gradePct).toFixed(2) };
     } else if (n.includes("辟谷")) {
       item.effect = { type: "fasting", days: Math.round(30 * gradePct) };
+    } else if (n.includes("洗髓")) {
+      item.effect = { type: "root", value: 1 };
     }
   }
 
-  if (item.type !== "pill" || !item.effect || !item.effect.type) {
+  if (!isPillType || !item.effect || !item.effect.type) {
     log(`【${item.name || name}】效果尚未实现。`, "c-bad");
     return;
   }
@@ -794,6 +831,28 @@ function useItem(name) {
       if (pet.loyalty === undefined) pet.loyalty = 50;
       pet.loyalty = Math.min(100, pet.loyalty + e.value);
       detail.push(`${pet.name} 忠诚度 +${e.value}（当前 ${pet.loyalty}）`);
+      consumed = true;
+      break;
+    }
+    case "root": {
+      if (S.roots) {
+        const keys = Object.keys(S.roots).filter(k => S.roots[k] > 0);
+        const targetRoot = keys.length > 0 ? keys[0] : "jin";
+        S.roots[targetRoot] = (S.roots[targetRoot] || 0) + (e.value || 1);
+      }
+      detail.push(`洗筋伐髓，灵根潜质提升 +${e.value || 1}`);
+      consumed = true;
+      break;
+    }
+    case "mood": {
+      S.mood = Math.min(2, (S.mood || 0) + (e.value || 1));
+      detail.push(`心境平复，心情提升`);
+      consumed = true;
+      break;
+    }
+    case "age": {
+      S.maxAge = (S.maxAge || 80) + (e.value || 50);
+      detail.push(`寿元上限 +${e.value || 50}`);
       consumed = true;
       break;
     }
@@ -1079,8 +1138,85 @@ function renderProfileHeart() {
 }
 
 /* ============================================================
-   法术（可筛选 + 紧凑图文条目）
+   法术（可筛选 + 紧凑图文条目，包含通玄法术与已学拳脚/兵刃招式）
    ============================================================ */
+
+function getCombinedLearnedSpellsAndSkills() {
+  const result = [];
+  const seenIds = new Set();
+
+  /* 1. 已学法术 (S.spells.learned) */
+  const learnedSpells = typeof listLearnedSpells === "function" ? listLearnedSpells() : [];
+  learnedSpells.forEach(sp => {
+    if (!sp || seenIds.has(sp.id)) return;
+    seenIds.add(sp.id);
+    const check = typeof canUseSpell === "function" ? canUseSpell(sp.id) : { ok: true };
+    result.push({
+      id: sp.id,
+      name: sp.name,
+      type: sp.type || "通用",
+      target: sp.target || "enemySingle",
+      costText: `💧 ${sp.cost && sp.cost.mp ? sp.cost.mp : 0}`,
+      power: sp.power || 1,
+      desc: sp.desc || "",
+      usable: check,
+      isCombatSkill: false,
+    });
+  });
+
+  /* 2. 开局及后续习得的拳脚/兵刃武技 (S.combatSkills.learned) */
+  const starterArtTitleMap = {
+    sk_fist1:  "猛虎伏山拳",
+    sk_palm1:  "落花穿云掌",
+    sk_leg1:   "连环旋风腿",
+    sk_sword1: "青锋剑法",
+    sk_blade1: "开山刀法",
+    sk_staff1: "齐眉棍法",
+    sk_whip1:  "灵蛇鞭法",
+  };
+  const learnedSkillIds = (S && S.combatSkills && Array.isArray(S.combatSkills.learned)) ? S.combatSkills.learned : [];
+  learnedSkillIds.forEach(id => {
+    if (!id || seenIds.has(id)) return;
+    const sk = typeof getCombatSkill === "function" ? getCombatSkill(id) : null;
+    if (!sk) return;
+    seenIds.add(sk.id);
+
+    let ok = true;
+    let reason = "";
+    if (sk.skillReq) {
+      for (const k in sk.skillReq) {
+        const lvl = (S.skills && S.skills[k] && S.skills[k].lvl) || 0;
+        if (lvl < sk.skillReq[k]) {
+          ok = false;
+          reason = `${k} 需 Lv.${sk.skillReq[k]}`;
+          break;
+        }
+      }
+    }
+
+    const hpCost = (sk.cost && sk.cost.hp) || 0;
+    const costText = hpCost > 0 && hpCost < 1
+      ? `❤️ ${Math.round(hpCost * 100)}%血`
+      : `❤️ ${hpCost}`;
+    const artTitle = starterArtTitleMap[sk.id];
+    const displayName = artTitle && artTitle !== sk.name ? `${artTitle}·${sk.name}` : sk.name;
+
+    result.push({
+      id: sk.id,
+      name: displayName,
+      rawName: sk.name,
+      type: sk.type || "通用",
+      target: sk.target || "enemySingle",
+      costText,
+      power: sk.power || 1,
+      desc: sk.desc || "",
+      usable: { ok, reason },
+      isCombatSkill: true,
+    });
+  });
+
+  return result;
+}
 
 function renderProfileSpells() {
   let html = "";
@@ -1101,7 +1237,7 @@ function renderProfileSpells() {
   html += `</div>`;
 
   if (currentSpellFilter !== "skills") {
-    const learnedSpells = listLearnedSpells();
+    const learnedSpells = getCombinedLearnedSpellsAndSkills();
     let filteredSpells = learnedSpells;
 
     if (currentSpellFilter === "jian") {
@@ -1119,8 +1255,8 @@ function renderProfileSpells() {
       html += `<p class="empty">此门类下暂无修习法术。</p>`;
     } else {
       filteredSpells.forEach(sp => {
-        const usable = canUseSpell(sp.id);
-        const icon = SPELL_ICONS[sp.type] || "✨";
+        const usable = sp.usable || { ok: true };
+        const icon = SPELL_ICONS[sp.type] || SKILL_ICONS[sp.type] || "✨";
         const tl = {
           enemySingle: "敌单", enemyAll: "敌全",
           allySingle: "我单", allyAll: "我全", all: "全体",
@@ -1134,7 +1270,7 @@ function renderProfileSpells() {
                 <div class="spell-tile-top">
                   <span class="spell-name">${sp.name}</span>
                   <span class="tag">${tl}</span>
-                  <span class="spell-cost-chip">💧 ${sp.cost.mp}</span>
+                  <span class="spell-cost-chip">${sp.costText}</span>
                   <span class="spell-power-chip">💥 ×${sp.power}</span>
                 </div>
                 <div class="spell-desc-line" title="${sp.desc}">${sp.desc}</div>
@@ -1271,10 +1407,12 @@ function renderProfileHobbies() {
 
 function renderProfileBag() {
   const bagTabIcons = {
+    "特别": "✨",
+    "装备": "⚔️",
+    "心法·法术": "📖",
+    "秘籍": "📜",
     "丹药": "💊",
     "材料": "🌿",
-    "装备": "⚔️",
-    "秘籍": "📜",
     "逆天宝物": "☯️",
     "任务道具": "🏷️",
     "其他": "📦",
@@ -1287,7 +1425,10 @@ function renderProfileBag() {
   });
   html += `</div>`;
 
-  if (currentBagTab === "丹药") {
+  if (currentBagTab === "特别") {
+    html += renderInventoryByType("special");
+  }
+  else if (currentBagTab === "丹药") {
     html += renderInventoryByType("pill");
     html += renderInventoryByType("petBreak", true);
     html += renderInventoryByType("food", true);
@@ -1299,9 +1440,10 @@ function renderProfileBag() {
     html += renderInventoryByType("equip");
     html += renderInventoryByType("artifact", true);
   }
-  else if (currentBagTab === "秘籍") {
+  else if (currentBagTab === "心法·法术" || currentBagTab === "秘籍") {
     html += renderInventoryByType("heartFragment");
     html += renderInventoryByType("spellbook", true);
+    html += renderInventoryByType("skillbook", true);
     html += renderInventoryByType("summonbook", true);
   }
   else if (currentBagTab === "逆天宝物") {
@@ -1332,10 +1474,36 @@ function getItemTierColorClass(item) {
 }
 
 function renderInventoryByType(type, shortTitle) {
-  const ids = getItemsByType(type).filter(id => S.inventory[id] > 0);
-  if (ids.length === 0) return shortTitle ? "" : `<p class="empty">行囊空空如也。</p>`;
+  let ids = [];
+  if (type === "pill") {
+    // 包含所有 S.inventory 中是 pill 或 pillTemplate 的物品
+    ids = Object.keys(S.inventory || {}).filter(id => {
+      if (!id || id === "undefined" || id === "null" || S.inventory[id] <= 0) return false;
+      const it = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id];
+      return it && (it.type === "pill" || it.type === "pillTemplate");
+    });
+  } else if (type === "special") {
+    // 特别道具分类：确保宗门青史策始终常驻并置顶
+    if (S && S.sect && typeof ensureSectChronicleItem === "function") {
+      ensureSectChronicleItem();
+    }
+    ids = Object.keys(S.inventory || {}).filter(id => {
+      if (!id || id === "undefined" || id === "null" || S.inventory[id] <= 0) return false;
+      const it = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id];
+      return it && (it.type === "special" || it.pinned || id === "sect_chronicle_scroll");
+    });
+    // 若已拜入宗门但在背包中遗漏，直接置入列表
+    if (S && S.sect && !ids.includes("sect_chronicle_scroll")) {
+      ids.unshift("sect_chronicle_scroll");
+    }
+  } else {
+    ids = getItemsByType(type).filter(id => id && id !== "undefined" && S.inventory[id] > 0);
+  }
+
+  if (ids.length === 0) return shortTitle ? "" : `<p class="empty">此分类下暂无灵物道具。</p>`;
 
   const typeNames = {
+    special: "特别重器",
     pill: "丹药",
     petBreak: "灵宠突破丹",
     food: "兽粮",
@@ -1353,31 +1521,48 @@ function renderInventoryByType(type, shortTitle) {
   let html = shortTitle ? `<div class="parchment-sec-header">${typeNames[type] || type}</div>` : "";
   html += `<div class="parchment-list-wrap">`;
 
-  let sorted = ids;
-  if (type === "mat" || type === "pill") {
-    sorted = [...ids].sort((a, b) => {
-      const ia = ITEMS[a] || {}, ib = ITEMS[b] || {};
-      const ba = ia.baseId || a, bb = ib.baseId || b;
-      if (ba !== bb) return ba.localeCompare(bb);
-      return (ia.grade || 0) - (ib.grade || 0);
-    });
+  /* 置顶优先 (always on top)，其余按阶 (tier)、品 (grade) 从高到低排序 */
+  const sorted = [...ids].sort((a, b) => {
+    const ia = (typeof getItem === "function" ? getItem(a) : null) || ITEMS[a] || {};
+    const ib = (typeof getItem === "function" ? getItem(b) : null) || ITEMS[b] || {};
+    const isPinnedA = !!(ia.pinned || a === "sect_chronicle_scroll");
+    const isPinnedB = !!(ib.pinned || b === "sect_chronicle_scroll");
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+
+    if (typeof compareItemsByTierGradeDesc === "function") {
+      return compareItemsByTierGradeDesc(a, b);
+    }
+    if ((ib.tier || 1) !== (ia.tier || 1)) return (ib.tier || 1) - (ia.tier || 1);
+    return (ib.grade || 1) - (ia.grade || 1);
+  });
+
+  if (typeof window !== "undefined") {
+    window._currentBagSortedIds = sorted;
   }
 
   sorted.forEach(id => {
-    const item = ITEMS[id] || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type };
-    const count = S.inventory[id];
-    const icon = (ITEM_TYPE_ICONS && ITEM_TYPE_ICONS[item.type]) || "📦";
+    const item = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id] || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type };
+    const count = (S.inventory && S.inventory[id]) || 1;
+    const icon = typeof getItemIcon === "function" ? getItemIcon(item, id) : ((ITEM_TYPE_ICONS && ITEM_TYPE_ICONS[item.type]) || "📦");
     const tierCls = getItemTierColorClass(item);
     const isEq = S.equipped && Object.values(S.equipped).includes(id);
+    const isPinned = item.pinned || id === "sect_chronicle_scroll";
+    const safeName = (item.name && item.name !== "undefined" && item.name !== "null") ? item.name : (id !== "undefined" ? id : "修仙灵物");
+    const tg = typeof getItemTierAndGrade === "function" ? getItemTierAndGrade(item, id) : { badge: `${item.tier || 1}阶·${item.grade || 1}品` };
+    const clickFn = (id === "sect_chronicle_scroll")
+      ? "openSectChronicleModal()"
+      : `showItemDetailModal('${id}')`;
 
     html += `
-      <div class="parchment-item-row" onclick="showItemDetailModal('${id}')" title="点击查看【${item.name || id}】详情与操作">
+      <div class="parchment-item-row ${isPinned ? 'pinned-item-row' : ''}" onclick="${clickFn}" title="点击查阅【${safeName}】详情">
         <div class="p-row-left">
           <div class="p-row-icon">${icon}</div>
-          <span class="p-row-name ${tierCls}">${item.name || id}</span>
+          <span class="p-row-name ${tierCls}">${safeName}</span>
+          ${isPinned ? '<span class="p-row-badge pinned-gold">📜 宗门传世 · 置顶</span>' : `<span class="p-row-badge">${tg.badge}</span>`}
           ${isEq ? '<span class="p-row-badge">已佩</span>' : ''}
         </div>
-        <span class="p-row-count">x${count}</span>
+        <span class="p-row-count">${isPinned ? '【研读】' : `x${count}`}</span>
       </div>
     `;
   });
@@ -1535,10 +1720,12 @@ function renderProfileMainPage() {
   const activePet = S.equipped && S.equipped.pet ? (S.pets?.list?.find(p => p.uid === S.equipped.pet)) : null;
 
   /* 下卷：已习法术与百艺预览 */
-  const learnedSpells = typeof listLearnedSpells === "function" ? listLearnedSpells() : [];
+  const learnedSpells = typeof getCombinedLearnedSpellsAndSkills === "function"
+    ? getCombinedLearnedSpellsAndSkills()
+    : (typeof listLearnedSpells === "function" ? listLearnedSpells() : []);
   const topSpellsHtml = learnedSpells.length > 0
     ? learnedSpells.slice(0, 4).map(sp => {
-        const icon = SPELL_ICONS[sp.type] || "✨";
+        const icon = SPELL_ICONS[sp.type] || SKILL_ICONS[sp.type] || "✨";
         return `
           <div class="char-mini-pill-card" onclick="openProfileSubModal('法术')">
             <span class="cmp-ico">${icon}</span>
@@ -1775,7 +1962,9 @@ function renderProfileMainPage() {
 
 function renderCompactDaoQuadRow(inModal) {
   if (!S) return "";
-  const spellCount = typeof listLearnedSpells === "function" ? listLearnedSpells().length : 0;
+  const spellCount = typeof getCombinedLearnedSpellsAndSkills === "function"
+    ? getCombinedLearnedSpellsAndSkills().length
+    : (typeof listLearnedSpells === "function" ? listLearnedSpells().length : 0);
   const aptObj = (typeof APTITUDES !== "undefined" && APTITUDES.find(a => a.id === S.aptitude)) || (typeof APTITUDES !== "undefined" ? APTITUDES[0] : null);
   const aptLabel = aptObj ? aptObj.name : (S.flags?.destinyTitle || "凡胎问道");
 
@@ -1888,69 +2077,257 @@ function autoEquipBest() {
 }
 
 /* ============================================================
-   【行囊】主视图 (参照上传图5：分类标签 + 极简名字行 + 点击弹窗)
+   【行囊】主视图 (删除“全部”，按阶·品从高到低排序，支持左右滑动切换分类页)
    ============================================================ */
+
+const BAG_CATEGORY_FILTERS = [
+  { id: "special", label: "特别" },
+  { id: "equip",   label: "装备" },
+  { id: "arts",    label: "心法·法术" },
+  { id: "pill",    label: "丹药" },
+  { id: "mat",     label: "材料" },
+];
 
 function switchBagFilter(f) {
   currentBagFilter = f;
   render();
 }
 
+/* 左右滑动或点击切换下一个/上一个行囊分类页面 */
+function swipeBagCategory(offset) {
+  const validIds = BAG_CATEGORY_FILTERS.map(f => f.id);
+  let curIdx = validIds.indexOf(currentBagFilter);
+  if (curIdx === -1) curIdx = 0;
+  const nextIdx = (curIdx + offset + validIds.length) % validIds.length;
+  currentBagFilter = validIds[nextIdx];
+  render();
+}
+
+/* 为行囊页面绑定左右滑动手势（支持触屏 touch 与鼠标拖拽 swipe 切换到相邻分类页） */
+function bindBagPageSwipeGesture() {
+  if (typeof document === "undefined") return;
+  const bagEl = document.querySelector("#panelContent .om-bag-parchment");
+  if (!bagEl || bagEl._bagSwipeBound) return;
+  bagEl._bagSwipeBound = true;
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  bagEl.addEventListener("touchstart", (e) => {
+    if (!e.touches || e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  bagEl.addEventListener("touchend", (e) => {
+    if (!tracking || !e.changedTouches || e.changedTouches.length === 0) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.35) {
+      if (dx < 0) swipeBagCategory(1);
+      else swipeBagCategory(-1);
+    }
+  }, { passive: true });
+
+  bagEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    tracking = true;
+  });
+
+  bagEl.addEventListener("mouseup", (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) >= 60 && Math.abs(dx) > Math.abs(dy) * 1.35) {
+      if (dx < 0) swipeBagCategory(1);
+      else swipeBagCategory(-1);
+    }
+  });
+}
+
+function renderBagArtsLearnedSection() {
+  if (!S) return "";
+  let html = "";
+
+  /* 1. 已习得心法（按境界从高到低排序） */
+  const learnedArtIds = (S.heartArts && Array.isArray(S.heartArts.learned)) ? S.heartArts.learned.slice() : [];
+  const learnedArts = learnedArtIds
+    .map(id => (typeof HEART_ARTS !== "undefined" ? HEART_ARTS.find(a => a.id === id) : null))
+    .filter(Boolean)
+    .sort((a, b) => (b.realm || 1) - (a.realm || 1));
+
+  if (learnedArts.length > 0) {
+    html += `<div class="parchment-sec-header">已修心法 (${learnedArts.length})</div>`;
+    html += `<div class="parchment-list-wrap">`;
+    learnedArts.forEach(art => {
+      const prog = getArtProgress(art.id);
+      const isCur = S.heartArts && S.heartArts.current === art.id;
+      const tierNum = art.realm || 1;
+      const gradeNum = Math.max(1, tierNum * 2 - 1);
+      const tierCls = tierNum >= 3 ? "tier-gold" : tierNum === 2 ? "tier-purple" : "tier-blue";
+      const progTxt = prog.lvl === 0 ? `熟练 ${prog.proficiency.toFixed(0)}%` : `Lv.${prog.lvl}/${art.maxLvl}`;
+      html += `
+        <div class="parchment-item-row" onclick="openProfileSubModal('心法')" title="点击查看《${art.name}》心法详情">
+          <div class="p-row-left">
+            <div class="p-row-icon">📜</div>
+            <span class="p-row-name ${tierCls}">《${art.name}》</span>
+            <span class="p-row-badge">${tierNum}阶·${gradeNum}品</span>
+            ${isCur ? '<span class="p-row-badge">运转中</span>' : ''}
+          </div>
+          <span class="p-row-count">${progTxt} ▸</span>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  /* 2. 已习得法术与武道神通 */
+  const learnedSpells = typeof getCombinedLearnedSpellsAndSkills === "function"
+    ? getCombinedLearnedSpellsAndSkills()
+    : (typeof listLearnedSpells === "function" ? listLearnedSpells() : []);
+  if (learnedSpells.length > 0) {
+    html += `<div class="parchment-sec-header">已学通玄法术 (${learnedSpells.length})</div>`;
+    html += `<div class="parchment-list-wrap">`;
+    learnedSpells.forEach(sp => {
+      const icon = SPELL_ICONS[sp.type] || SKILL_ICONS[sp.type] || "✨";
+      const tierNum = sp.power >= 2.5 ? 3 : sp.power >= 1.7 ? 2 : 1;
+      const gradeNum = sp.power >= 2.5 ? 5 : sp.power >= 1.7 ? 3 : 1;
+      const tierCls = tierNum >= 3 ? "tier-gold" : tierNum === 2 ? "tier-purple" : "tier-blue";
+      html += `
+        <div class="parchment-item-row" onclick="openProfileSubModal('法术')" title="点击查看【${sp.name}】法术详情">
+          <div class="p-row-left">
+            <div class="p-row-icon">${icon}</div>
+            <span class="p-row-name ${tierCls}">${sp.name}</span>
+            <span class="p-row-badge">${tierNum}阶·${gradeNum}品·${sp.type}系</span>
+          </div>
+          <span class="p-row-count">威力×${sp.power} ▸</span>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  return html;
+}
+
 function renderBagMainPage() {
   if (!S) return "";
-  const filters = [
-    { id: "all",     label: "全部" },
-    { id: "equip",   label: "装备" },
-    { id: "pill",    label: "丹药" },
-    { id: "mat",     label: "材料" },
-    { id: "special", label: "特殊" },
-  ];
+  const filters = BAG_CATEGORY_FILTERS;
+  if (!filters.some(f => f.id === currentBagFilter)) {
+    currentBagFilter = "special";
+  }
 
-  const allInvIds = Object.keys(S.inventory || {}).filter(id => S.inventory[id] > 0);
+  /* 拜入宗门后确保青史录在随身背包中常驻 */
+  if (S && S.sect && typeof ensureSectChronicleItem === "function") {
+    ensureSectChronicleItem();
+  }
+
+  if (S.inventory) {
+    delete S.inventory["undefined"];
+    delete S.inventory["null"];
+    delete S.inventory[""];
+  }
+  if (S.tools) {
+    delete S.tools["undefined"];
+    delete S.tools["null"];
+    delete S.tools[""];
+  }
+
+  const allInvIds = Object.keys(S.inventory || {}).filter(id => id && id !== "undefined" && id !== "null" && S.inventory[id] > 0);
   /* 合并随身工具 S.tools（若不在 inventory 中） */
-  const toolIds = Object.keys(S.tools || {}).filter(id => S.tools[id] && !S.inventory[id]);
+  const toolIds = Object.keys(S.tools || {}).filter(id => id && id !== "undefined" && id !== "null" && S.tools[id] && !S.inventory[id]);
 
   const combined = [
     ...allInvIds.map(id => ({ id, count: S.inventory[id], isTool: false })),
     ...toolIds.map(id => ({ id, count: 1, isTool: true })),
   ];
 
+  /* 拜入宗门后若 special 分类遗漏青史录，自动补入 */
+  if (S && S.sect && !combined.some(e => e.id === "sect_chronicle_scroll")) {
+    combined.unshift({ id: "sect_chronicle_scroll", count: 1, isTool: false });
+  }
+
   const filtered = combined.filter(entry => {
-    const item = ITEMS[entry.id] || (typeof findEquipById === "function" ? findEquipById(entry.id) : null) || { type: "other" };
+    if (!entry.id || entry.id === "undefined" || entry.id === "null") return false;
+    const item = (typeof getItem === "function" ? getItem(entry.id) : null) || ITEMS[entry.id] || (typeof findEquipById === "function" ? findEquipById(entry.id) : null) || { type: "other" };
     const t = item.type || "other";
-    if (currentBagFilter === "all") return true;
     if (currentBagFilter === "equip") return t === "equip" || t === "artifact" || t === "heavenDefying";
-    if (currentBagFilter === "pill") return t === "pill" || t === "food" || t === "petBreak";
+    if (currentBagFilter === "arts") return ["heartFragment", "spellbook", "skillbook", "summonbook"].includes(t);
+    if (currentBagFilter === "pill") return t === "pill" || t === "pillTemplate" || t === "food" || t === "petBreak";
     if (currentBagFilter === "mat") return t === "mat";
     if (currentBagFilter === "special") {
-      return ["heartFragment", "spellbook", "skillbook", "summonbook", "quest", "other"].includes(t);
+      return ["special", "quest", "other"].includes(t) || item.pinned || entry.id === "sect_chronicle_scroll";
     }
-    return true;
+    return false;
   });
 
+  /* 置顶优先 (always on top)，其余按【阶 (tier) 从高到低】、【品 (grade) 从高到低】排序 */
+  filtered.sort((entryA, entryB) => {
+    const itemA = (typeof getItem === "function" ? getItem(entryA.id) : null) || ITEMS[entryA.id] || {};
+    const itemB = (typeof getItem === "function" ? getItem(entryB.id) : null) || ITEMS[entryB.id] || {};
+    const isPinnedA = !!(itemA.pinned || entryA.id === "sect_chronicle_scroll");
+    const isPinnedB = !!(itemB.pinned || entryB.id === "sect_chronicle_scroll");
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+
+    if (typeof compareItemsByTierGradeDesc === "function") {
+      return compareItemsByTierGradeDesc(entryA.id, entryB.id);
+    }
+    return 0;
+  });
+
+  if (typeof window !== "undefined") {
+    window._currentBagSortedIds = filtered.map(e => e.id);
+  }
+
   let rowsHtml = "";
-  if (filtered.length === 0) {
-    rowsHtml = `<div class="parchment-empty">此分类下暂无灵物</div>`;
+  const extraArtsHtml = currentBagFilter === "arts" ? renderBagArtsLearnedSection() : "";
+
+  if (filtered.length === 0 && !extraArtsHtml) {
+    rowsHtml = `<div class="parchment-empty">此分类下暂无灵物（可左右滑动切换分类）</div>`;
   } else {
-    rowsHtml = filtered.map(entry => {
+    if (currentBagFilter === "arts" && filtered.length > 0) {
+      rowsHtml += `<div class="parchment-sec-header">行囊心法残卷与法术秘籍 (${filtered.length})</div>`;
+    }
+    rowsHtml += filtered.map(entry => {
       const id = entry.id;
-      const item = ITEMS[id] || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type: "other" };
-      const icon = (ITEM_TYPE_ICONS && ITEM_TYPE_ICONS[item.type]) || "📦";
+      const item = (typeof getItem === "function" ? getItem(id) : null) || ITEMS[id] || (typeof findEquipById === "function" ? findEquipById(id) : null) || { name: id, type: "other" };
+      const icon = typeof getItemIcon === "function" ? getItemIcon(item, id) : ((ITEM_TYPE_ICONS && ITEM_TYPE_ICONS[item.type]) || "📦");
       const tierCls = getItemTierColorClass(item);
       const isEquipped = S.equipped && Object.values(S.equipped).includes(id);
+      const isPinned = item.pinned || id === "sect_chronicle_scroll";
+      const safeName = (item.name && item.name !== "undefined" && item.name !== "null") ? item.name : (id !== "undefined" ? id : "修仙灵物");
+      const tg = typeof getItemTierAndGrade === "function" ? getItemTierAndGrade(item, id) : { badge: `${item.tier || 1}阶·${item.grade || 1}品` };
+      const clickFn = (id === "sect_chronicle_scroll")
+        ? "openSectChronicleModal()"
+        : `showItemDetailModal('${id}')`;
 
       return `
-        <div class="parchment-item-row" onclick="showItemDetailModal('${id}')" title="点击查看【${item.name || id}】详细说明">
+        <div class="parchment-item-row ${isPinned ? 'pinned-item-row' : ''}" onclick="${clickFn}" title="点击查阅【${safeName}】">
           <div class="p-row-left">
             <div class="p-row-icon">${icon}</div>
-            <span class="p-row-name ${tierCls}">${item.name || id}</span>
+            <span class="p-row-name ${tierCls}">${safeName}</span>
+            ${isPinned ? '<span class="p-row-badge pinned-gold">📜 宗门传世 · 置顶</span>' : `<span class="p-row-badge">${tg.badge}</span>`}
             ${isEquipped ? '<span class="p-row-badge">已装</span>' : ''}
           </div>
-          <span class="p-row-count">x${entry.count}</span>
+          <span class="p-row-count">${isPinned ? '【研读】' : `x${entry.count}`}</span>
         </div>
       `;
     }).join("");
+    if (extraArtsHtml) {
+      rowsHtml += extraArtsHtml;
+    }
   }
+
+  const curFilterIdx = filters.findIndex(f => f.id === currentBagFilter);
+  const prevFilter = filters[(curFilterIdx - 1 + filters.length) % filters.length];
+  const nextFilter = filters[(curFilterIdx + 1) % filters.length];
 
   return `
     <div class="om-bag-parchment">
@@ -1962,7 +2339,11 @@ function renderBagMainPage() {
         `).join("")}
       </div>
 
-      <div class="om-bag-hint">点击任意灵物名称即可展卷查看详情与使用</div>
+      <div class="om-bag-hint" style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+        <button type="button" class="small" style="padding:1px 7px; font-size:11px;" onclick="swipeBagCategory(-1)">◀ ${prevFilter.label}</button>
+        <span>左右滑动切换页面</span>
+        <button type="button" class="small" style="padding:1px 7px; font-size:11px;" onclick="swipeBagCategory(1)">${nextFilter.label} ▶</button>
+      </div>
 
       <div class="om-bag-scroll-list">
         ${rowsHtml}
@@ -1970,7 +2351,7 @@ function renderBagMainPage() {
 
       <div class="om-bag-footer">
         <button type="button" class="om-bag-sell-btn" onclick="openBatchSellModal()">📦 清理废丹/闲置</button>
-        <span class="om-bag-capacity">灵物种类 ${combined.length} / 200</span>
+        <span class="om-bag-capacity">当前分类 ${filtered.length} 件 · 总计 ${combined.length} / 200</span>
       </div>
     </div>
   `;
@@ -1984,23 +2365,36 @@ function openBatchSellModal() {
   });
 
   let totalGain = 0;
+  let totalCount = 0;
   wastePills.forEach(id => {
+    totalCount += S.inventory[id];
     totalGain += S.inventory[id] * 2;
   });
 
   showModal("📦 行囊整理 · 清理废丹", `
-    <p>可在行囊中点击任意物品查看详情并单独出售。</p>
-    <p>当前行囊中共有 <b>${wastePills.length}</b> 种废丹（0品丹药，不可服用）。</p>
+    <p>可在行囊中点击任意物品查看详情，自选数量并确认出售。</p>
+    <p>当前行囊中共有 <b>${wastePills.length}</b> 种（共 <b>${totalCount}</b> 粒）废丹（0品丹药，不可服用）。</p>
   `, [
     ...(wastePills.length > 0 ? [{
-      label: `一键回收全部废丹 (+${totalGain}铜钱)`,
+      label: `回收全部废丹 (+${totalGain}铜钱)`,
       primary: true,
       fn: () => {
-        wastePills.forEach(id => { delete S.inventory[id]; });
-        S.money = (S.money || 0) + totalGain;
-        log(`一键清理全部废丹，回收获得 ${totalGain} 铜钱。`, "c-good");
-        closeModal();
-        save(); render();
+        showModal("⚠️ 确认卖出全部废丹", `
+          <p>确认将行囊中全部 <b>${totalCount}</b> 粒废丹卖出回收，共获得 <b style="color:var(--text-gold);">${totalGain} 铜钱</b> 吗？</p>
+        `, [
+          {
+            label: "确认卖出",
+            primary: true,
+            fn: () => {
+              wastePills.forEach(id => { delete S.inventory[id]; });
+              S.money = (S.money || 0) + totalGain;
+              log(`一键清理全部废丹，回收获得 ${totalGain} 铜钱。`, "c-good");
+              closeModal();
+              save(); render();
+            }
+          },
+          { label: "取消", fn: () => openBatchSellModal() }
+        ]);
       }
     }] : []),
     { label: "关闭", fn: closeModal }

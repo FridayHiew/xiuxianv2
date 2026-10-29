@@ -54,6 +54,7 @@ function doChore() {
   }
   S.actionsUsed += actualNeed;
   S.choresUsedTotal = (S.choresUsedTotal || 0) + todo;
+  if (typeof triggerDailyTask === "function") triggerDailyTask("chore");
 
   const rank = S.flags.rank || "杂务";
   if (rank !== "杂务") {
@@ -68,7 +69,9 @@ function doChore() {
     log(`执行【${chore.name}】，熟练度 +${totalInc.toFixed(1)}%（${q.done}/${q.amount}）。`, "c-normal");
   }
 
-  if (S.actionsUsed >= ACTIONS_PER_SLOT && S.hour < 2) {
+  if (typeof checkAdvanceTimeSlot === "function") {
+    checkAdvanceTimeSlot();
+  } else if (S.actionsUsed >= ACTIONS_PER_SLOT && S.hour < 2) {
     S.hour++;
     S.actionsUsed = 0;
     log(`【时间】进入${HOURS[S.hour]}。`, "c-blue");
@@ -91,6 +94,7 @@ function doPartTime() {
   if (S.actionsUsed >= ACTIONS_PER_SLOT) { log("本时段行动已用完。", "c-bad"); return; }
   S.actionsUsed++;
   S.choresUsedTotal = (S.choresUsedTotal || 0) + 1;
+  if (typeof triggerDailyTask === "function") triggerDailyTask("chore");
   const rank = S.flags.rank || "杂务";
   const chores = rank === "杂务" ? CHORES_FAN : rank === "门外" ? CHORES_MENWAI : CHORES_MENNEI;
   const chore = pick(chores);
@@ -123,6 +127,14 @@ function morningPrompt() {
   if (S.hour !== 0) return;
   if (S.dailyQuest) return;
   morningPrompted = true;
+
+  /* ★ 周末不应该有杂务，宗门传功取代今日任务 */
+  const isWeekend = S.weekday === 0 || S.weekday === 6;
+  if (isWeekend) {
+    S.dailyQuest = null;
+    log(`【宗门法筵】今日为周${WEEKDAYS[S.weekday]}休沐，执事堂不设杂务。宗门传功取代今日任务，诸位弟子可前往听法受业！`, "c-gold");
+    return;
+  }
 
   const rank = S.flags.rank || "杂务";
   let chores;
@@ -178,11 +190,12 @@ function nightPrompt() {
   nightPrompted = true;
 
   const done = S.dailyQuest && S.dailyQuest.done >= S.dailyQuest.amount;
-  const canFree = done;
+  const isWeekend = S.weekday === 0 || S.weekday === 6;
+  const canFree = done || isWeekend;
 
   let body, actions;
   if (canFree) {
-    body = `<p>傍晚的食堂热气腾腾，灵香扑鼻。</p><p>今日杂务圆满，<b>可免费享用灵膳</b>。</p>`;
+    body = `<p>傍晚的食堂热气腾腾，灵香扑鼻。</p><p>${isWeekend ? '周末休沐法筵，宗门犒赏弟子，' : '今日杂务圆满，'}<b>可免费享用灵膳</b>。</p>`;
     actions = [{ label: "享用灵膳（免费）", fn: () => { eatDinner(true); } }];
   } else {
     const cur = getCurrency();
@@ -242,7 +255,8 @@ function eatDinner(free) {
   closeModal();
   showActionModal("晚餐", detail, () => {
     save(); render();
-    setTimeout(() => hobbyPrompt(), 300);
+    /* ★ 平缓过渡，避免过快跳转 */
+    setTimeout(() => hobbyPrompt(), 900);
   });
 }
 
@@ -260,7 +274,7 @@ function skipDinner() {
       `剩余 ${S.flags.fastingDays} 天`,
     ], () => {
       save(); render();
-      setTimeout(() => hobbyPrompt(), 300);
+      setTimeout(() => hobbyPrompt(), 900);
     });
     return;
   }
@@ -279,11 +293,11 @@ function skipDinner() {
   closeModal();
   showActionModal("饿肚子", detail, () => {
     save(); render();
-    setTimeout(() => hobbyPrompt(), 300);
+    setTimeout(() => hobbyPrompt(), 900);
   });
 }
 
-/* 爱好（35% 触发） */
+/* 爱好（35% 触发，带插图与5秒倒计时确认） */
 function hobbyPrompt() {
   if (hobbyPrompted) return;
   hobbyPrompted = true;
@@ -294,7 +308,7 @@ function hobbyPrompt() {
   if (remain <= 0) return;
 
   const hobby = pick(S.hobbies);
-  const quote = HOBBY_QUOTES[hobby] || `你花时间在【${hobby}】上。`;
+  const quote = HOBBY_QUOTES[hobby] || `你花时间在【${hobby}】上，神思悠远，心平气和。`;
   S.actionsUsed++;
   S.hobbySkill[hobby] = Math.min(100, (S.hobbySkill[hobby] || 0) + rnd(0.1, 0.5));
   S.mood = Math.min(2, S.mood + 1);
@@ -303,12 +317,52 @@ function hobbyPrompt() {
   log(`  心情 +1，${hobby} 熟练度提升。`, "c-good");
 
   save(); render();
-  showActionModal(`晚餐后 · ${hobby}`, [
-    quote,
-    "心情 +1",
-    `${hobby} 熟练度 +0.1~0.5`,
-    `消耗 1 行动（剩 ${ACTIONS_PER_SLOT - S.actionsUsed}）`,
-  ]);
+
+  /* 弹出晚膳后爱好模态框，带视觉插图和5秒倒计时限制 */
+  const hobbyBody = `
+    <div style="margin-bottom:12px; border-radius:8px; overflow:hidden; border:1px solid var(--border-gold); position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.6);">
+      <img src="./src/assets/images/cave_cultivation_1792114544316.jpg" style="width:100%; height:135px; object-fit:cover; display:block;" alt="${hobby}">
+      <div style="position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(14,10,7,0.95)); padding:8px 12px; color:#f0d080; font-family:var(--font-serif); font-size:14px; font-weight:600;">
+        🏮 暮色余晖 · 闲雅【${hobby}】
+      </div>
+    </div>
+    <p style="font-size:13.5px; line-height:1.6; color:#c4b494; margin-bottom:10px;">${quote}</p>
+    <div style="background:rgba(0,0,0,0.3); border:1px solid #3d2f1f; border-radius:6px; padding:8px 12px; font-size:12px; color:#d8b878; margin-bottom:14px;">
+      ✨ 心情 +1 · ${hobby} 熟练度提升 · 消耗 1 行动（剩 ${ACTIONS_PER_SLOT - S.actionsUsed}）
+    </div>
+    <div style="text-align:center;">
+      <button id="hobbyCountdownBtn" class="primary block" disabled style="opacity:0.6; cursor:not-allowed; padding:10px; font-size:14px;">
+        ⏳ 品味闲情 (5s)
+      </button>
+    </div>
+  `;
+
+  showModal(`晚餐后 · ${hobby}`, hobbyBody, []);
+
+  // 5 秒倒计时逻辑
+  let cd = 5;
+  const btn = document.getElementById("hobbyCountdownBtn");
+  const timer = setInterval(() => {
+    cd--;
+    const currentBtn = document.getElementById("hobbyCountdownBtn");
+    if (!currentBtn) {
+      clearInterval(timer);
+      return;
+    }
+    if (cd > 0) {
+      currentBtn.innerText = `⏳ 品味闲情 (${cd}s)`;
+    } else {
+      clearInterval(timer);
+      currentBtn.innerText = "✨ 怡然领受 · 收心安歇";
+      currentBtn.disabled = false;
+      currentBtn.style.opacity = "1";
+      currentBtn.style.cursor = "pointer";
+      currentBtn.onclick = () => {
+        closeModal();
+        render();
+      };
+    }
+  }, 1000);
 }
 
 /* 月俸（15 天一次） */
