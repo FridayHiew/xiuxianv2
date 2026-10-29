@@ -167,6 +167,7 @@ function renderPwaIcon(width, height, isMaskable = false) {
 // Generate all standard PWA resolutions
 const targets = [
   { file: 'pwa-192x192.png', size: 192, maskable: false },
+  { file: 'pwa-maskable-192x192.png', size: 192, maskable: true },
   { file: 'pwa-512x512.png', size: 512, maskable: false },
   { file: 'pwa-maskable-512x512.png', size: 512, maskable: true },
   { file: 'apple-touch-icon.png', size: 180, maskable: false },

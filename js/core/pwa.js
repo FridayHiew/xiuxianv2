@@ -4,8 +4,14 @@
    ============================================================ */
 
 (function () {
-  let _deferredInstallPrompt = null;
+  let _deferredInstallPrompt = window.__pwaDeferredPrompt || null;
   let _isInstalled = false;
+
+  // 监听来自 index.html 早先注册的 beforeinstallprompt
+  window.__onPwaPromptReady = function (e) {
+    _deferredInstallPrompt = e;
+    updateInstallButtonVisibility();
+  };
 
   // 检测是否已处于 PWA 全屏/独立 App 模式
   function checkIsStandalone() {
@@ -18,6 +24,18 @@
   function checkIsIOS() {
     const ua = (window.navigator && window.navigator.userAgent) ? window.navigator.userAgent.toLowerCase() : '';
     return /iphone|ipad|ipod/.test(ua);
+  }
+
+  // 检测是否为 Android 安卓设备
+  function checkIsAndroid() {
+    const ua = (window.navigator && window.navigator.userAgent) ? window.navigator.userAgent.toLowerCase() : '';
+    return /android/.test(ua);
+  }
+
+  // 检测是否处于微信、QQ、微博等第三方 App 内置网页视图中（内置视图完全禁用 PWA 安装）
+  function checkIsInAppBrowser() {
+    const ua = (window.navigator && window.navigator.userAgent) ? window.navigator.userAgent.toLowerCase() : '';
+    return /micromessenger|weibo|qq\/|line\/|fbav|instagram|toutiaomicroapp/.test(ua);
   }
 
   // 更新顶栏 PWA 安装按钮的显示状态
@@ -33,7 +51,7 @@
       return;
     }
 
-    // 只要有 deferredPrompt 或是 iOS 或常规浏览器，皆展示方便道友点击
+    // 只要有 deferredPrompt 或是移动端/桌面浏览器，皆展示方便道友点击
     btn.style.display = 'inline-flex';
   }
 
@@ -78,10 +96,38 @@
       return;
     }
 
-    // 1. 若处于编辑器内嵌 Iframe 预览窗口中，浏览器禁止在子框架内安装 PWA
+    const curUrl = window.location.href;
+
+    // 1. 若处于微信、QQ、微博、Line 等第三方应用内置 WebView 中（这些内置 WebView 不支持直接安装 PWA）
+    if (checkIsInAppBrowser()) {
+      if (typeof showModal === 'function') {
+        showModal('📲 请在系统浏览器中打开安装', `
+          <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
+            <div style="background: rgba(212, 163, 71, 0.12); border: 1px solid rgba(212, 163, 71, 0.35); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+              <b style="color: #ffe6a3;">💡 提示：当前处于应用内置浏览器中</b>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #d6c8b0;">微信、QQ、微博等内置浏览器受系统安全限制，<b>无法直接将网页安装为独立桌面 App</b>。需使用系统原生浏览器打开。</p>
+            </div>
+
+            <p style="margin-bottom: 8px;"><b>只需两步即可安装为手机桌面 App：</b></p>
+            <ol style="padding-left: 20px; margin-bottom: 12px;">
+              <li>点击右上角的「<b>···</b>」或「<b>⋮</b>」更多菜单；</li>
+              <li>选择 <b>【在浏览器中打开】</b>（推荐使用 Chrome 谷歌浏览器）；</li>
+              <li>在系统浏览器中打开后，点击顶栏 <b>【📲 安装】</b> 即可一键生成桌面 App！</li>
+            </ol>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <span id="pwaCopyHint" class="c-dim" style="font-size: 12px;">也可复制链接粘贴至手机 Chrome 打开</span>
+              <button type="button" class="small" onclick="window.copyAppUrl()">📋 复制链接</button>
+            </div>
+          </div>
+        `, [{ label: '知晓', fn: closeModal }]);
+      }
+      return;
+    }
+
+    // 2. 若处于编辑器内嵌 Iframe 预览窗口中，浏览器禁止在子框架内安装 PWA
     if (checkIsInIframe()) {
       if (typeof showModal === 'function') {
-        const curUrl = window.location.href;
         showModal('📲 安装《修仙人生》至主屏幕/桌面', `
           <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
             <div style="background: rgba(212, 163, 71, 0.12); border: 1px solid rgba(212, 163, 71, 0.35); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
@@ -109,13 +155,15 @@
       return;
     }
 
-    // 2. Chromium / Android / Edge 支持原生态安装弹窗
-    if (_deferredInstallPrompt) {
+    // 3. Chromium / Android / Edge 支持原生态安装弹窗
+    const promptEvent = _deferredInstallPrompt || window.__pwaDeferredPrompt;
+    if (promptEvent) {
       try {
-        _deferredInstallPrompt.prompt();
-        const choice = await _deferredInstallPrompt.userChoice;
+        promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
         if (choice && choice.outcome === 'accepted') {
           _deferredInstallPrompt = null;
+          window.__pwaDeferredPrompt = null;
           updateInstallButtonVisibility();
         }
       } catch (err) {
@@ -124,7 +172,35 @@
       return;
     }
 
-    // 3. iOS Safari 引导说明
+    // 4. Android 安卓手机专属指引（当浏览器尚未直接触发 beforeinstallprompt 事件时）
+    if (checkIsAndroid()) {
+      if (typeof showModal === 'function') {
+        showModal('📲 安卓手机安装《修仙人生》', `
+          <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
+            <div style="background: rgba(45, 122, 98, 0.15); border: 1px solid rgba(77, 182, 149, 0.4); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+              <b style="color: #6ee7b7;">📱 安卓手机一键安装至桌面</b>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #a7f3d0;">修仙人生已完全适配安卓 PWA 标准（配备 192x192 与 512x512 水墨自适应图标及离线仙境缓存）。</p>
+            </div>
+
+            <p style="margin-bottom: 8px;"><b>只需在安卓手机浏览器中操作：</b></p>
+            <ol style="padding-left: 20px; margin-bottom: 12px;">
+              <li>点击手机浏览器右上角的「<b>⋮</b>」（三个点）菜单按钮；</li>
+              <li>在下拉菜单中找到并点击 <b>【安装应用】</b> 或 <b>【添加到主屏幕】</b>（Add to Home screen）；</li>
+              <li>点击 <b>【安装】</b>，手机桌面将即刻生成《修仙人生》专属 App 图标！</li>
+            </ol>
+            <p style="font-size: 12px; color: #d6c8b0; margin-bottom: 10px;">💡 推荐使用 <b>Chrome 谷歌浏览器</b> 或 <b>Edge 浏览器</b> 打开，可自动生成如同原生 APK 般的独立全屏修真体验。</p>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <span id="pwaCopyHint" class="c-dim" style="font-size: 12px;">如需在手机 Chrome 中打开可复制链接</span>
+              <button type="button" class="small" onclick="window.copyAppUrl()">📋 复制链接</button>
+            </div>
+          </div>
+        `, [{ label: '知晓', fn: closeModal }]);
+      }
+      return;
+    }
+
+    // 5. iOS Safari 引导说明
     if (checkIsIOS()) {
       if (typeof showModal === 'function') {
         showModal('📲 安装《修仙人生》至主屏幕', `
@@ -142,7 +218,7 @@
       return;
     }
 
-    // 4. 通用桌面端浏览器引导（Chrome / Edge 等若尚未触发 beforeinstallprompt）
+    // 6. 通用桌面端浏览器引导（Chrome / Edge 等若尚未触发 beforeinstallprompt）
     if (typeof showModal === 'function') {
       showModal('📲 安装《修仙人生》到桌面', `
         <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
