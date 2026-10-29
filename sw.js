@@ -103,8 +103,17 @@ self.addEventListener('fetch', (event) => {
           }
           return networkRes;
         })
-        .catch(() => {
-          return caches.match('/index.html') || caches.match('/');
+        .catch(async () => {
+          const cachedIndex = await caches.match('/index.html');
+          if (cachedIndex) return cachedIndex;
+          const cachedRoot = await caches.match('/');
+          if (cachedRoot) return cachedRoot;
+          const cachedReq = await caches.match(req);
+          if (cachedReq) return cachedReq;
+          return new Response(
+            '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>修仙人生 · 离线仙境</title></head><body style="background:#0f1c19;color:#d4a347;font-family:sans-serif;text-align:center;padding:50px 20px;"><h2>修仙人生</h2><p>道友当前离线，请在联网后刷新重试。</p></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
         })
     );
     return;

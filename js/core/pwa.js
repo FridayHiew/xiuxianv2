@@ -59,6 +59,15 @@
     }
   }
 
+  // 检测是否处于内嵌 Iframe (如 AI Studio 预览环境，浏览器安全策略禁止在 iframe 中弹出 PWA 安装)
+  function checkIsInIframe() {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
+  }
+
   // 全局调用的安装入口
   window.handlePwaInstallClick = async function () {
     _isInstalled = checkIsStandalone();
@@ -69,7 +78,38 @@
       return;
     }
 
-    // 1. Chromium / Android / Edge 支持原生态安装弹窗
+    // 1. 若处于编辑器内嵌 Iframe 预览窗口中，浏览器禁止在子框架内安装 PWA
+    if (checkIsInIframe()) {
+      if (typeof showModal === 'function') {
+        const curUrl = window.location.href;
+        showModal('📲 安装《修仙人生》至主屏幕/桌面', `
+          <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
+            <div style="background: rgba(212, 163, 71, 0.12); border: 1px solid rgba(212, 163, 71, 0.35); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+              <b style="color: #ffe6a3;">💡 提示：当前处于内嵌预览窗口中</b>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #d6c8b0;">现代浏览器（Chrome/Safari/Edge）出于安全规范，<b>禁止在内嵌网页（Iframe）中直接安装 PWA</b>。必须在浏览器独立标签页中打开进行安装。</p>
+            </div>
+
+            <p style="margin-bottom: 8px;"><b>只需两步即可安装为独立 App：</b></p>
+            <ol style="padding-left: 20px; margin-bottom: 12px;">
+              <li>点击下方按钮在浏览器独立标签页中打开修仙人生；</li>
+              <li>在新页面打开后，点击浏览器地址栏右侧的 <b>【安装应用】</b> 图标（⊕ 或 🖥️）或点击顶栏 <b>【📲 安装】</b> 按钮完成安装！</li>
+            </ol>
+
+            <a href="${curUrl}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; box-sizing: border-box; text-align: center; background: linear-gradient(135deg, #c99c4c, #996f26); color: #0f1c19; font-weight: bold; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; margin: 8px 0 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+              🚀 在浏览器新标签页中打开《修仙人生》
+            </a>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <span id="pwaCopyHint" class="c-dim" style="font-size: 12px;">也可复制链接粘贴至手机或浏览器</span>
+              <button type="button" class="small" onclick="window.copyAppUrl()">📋 复制链接</button>
+            </div>
+          </div>
+        `, [{ label: '知晓', fn: closeModal }]);
+      }
+      return;
+    }
+
+    // 2. Chromium / Android / Edge 支持原生态安装弹窗
     if (_deferredInstallPrompt) {
       try {
         _deferredInstallPrompt.prompt();
@@ -84,7 +124,7 @@
       return;
     }
 
-    // 2. iOS Safari 引导说明
+    // 3. iOS Safari 引导说明
     if (checkIsIOS()) {
       if (typeof showModal === 'function') {
         showModal('📲 安装《修仙人生》至主屏幕', `
@@ -102,20 +142,45 @@
       return;
     }
 
-    // 3. 通用桌面端浏览器引导（Chrome / Edge 等若尚未触发 beforeinstallprompt）
+    // 4. 通用桌面端浏览器引导（Chrome / Edge 等若尚未触发 beforeinstallprompt）
     if (typeof showModal === 'function') {
       showModal('📲 安装《修仙人生》到桌面', `
         <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-base);">
-          <p>道友可点击浏览器地址栏右侧的 <b>【安装应用】图标（⊕ 或 🖥️）</b>，即可将《修仙人生》直接安装到电脑桌面与开始菜单，享受全屏沉浸修仙！</p>
+          <p>道友可点击浏览器地址栏右侧的 <b>【安装应用】图标（⊕ 或 🖥️）</b>，或点击浏览器右上角「<b>⋮ 菜单</b>」>「<b>保存并分享 / 安装《修仙人生》</b>」，即可直接安装到电脑桌面与开始菜单，享受全屏沉浸修仙！</p>
         </div>
       `, [{ label: '知晓', fn: closeModal }]);
+    }
+  };
+
+  // 复制当前游戏 URL 辅助方法
+  window.copyAppUrl = function () {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          if (typeof log === 'function') log('【仙法传讯】应用链接已复制至剪贴板，可粘贴至浏览器直接打开安装！', 'c-gold');
+          const hint = document.getElementById('pwaCopyHint');
+          if (hint) hint.textContent = '✅ 已成功复制！请粘贴至外部浏览器直接打开安装';
+        });
+      } else {
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        const hint = document.getElementById('pwaCopyHint');
+        if (hint) hint.textContent = '✅ 已成功复制！请粘贴至外部浏览器直接打开安装';
+      }
+    } catch (e) {
+      console.warn('Copy failed:', e);
     }
   };
 
   // 注册 Service Worker
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      const doRegister = () => {
         navigator.serviceWorker
           .register('/sw.js', { scope: '/' })
           .then((reg) => {
@@ -135,7 +200,13 @@
           .catch((err) => {
             console.warn('[PWA] Service Worker registration failed:', err);
           });
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        doRegister();
+      } else {
+        window.addEventListener('load', doRegister);
+      }
     }
   }
 

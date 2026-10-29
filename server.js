@@ -78,13 +78,18 @@ const server = http.createServer((req, res) => {
     }
 
     const ext = path.extname(safePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    const isSw = path.basename(safePath) === 'sw.js';
+    const baseName = path.basename(safePath).toLowerCase();
+    let contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    if (baseName === 'manifest.json' || ext === '.webmanifest') {
+      contentType = 'application/manifest+json; charset=utf-8';
+    }
+    const isSw = baseName === 'sw.js';
 
     const headers = {
       'Content-Type': contentType,
       'Content-Length': content.length,
       'Cache-Control': isSw ? 'no-cache, no-store, must-revalidate' : 'no-cache',
+      'Access-Control-Allow-Origin': '*',
     };
     if (isSw) {
       headers['Service-Worker-Allowed'] = '/';
